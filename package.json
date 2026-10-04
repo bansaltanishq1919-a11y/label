@@ -1,0 +1,18 @@
+{
+  "name": "label-platform",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Upload or scan any food label and see what's inside as teaspoons, daily limits and an ingredient ladder.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --env-file=.env server.js"
+  },
+  "engines": {
+    "node": ">=20.6"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0"
+  }
+}

@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Label Platform – what's really inside?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#17212f;--mute:#5d6b7e;--line:#dfe6ef;--brand:#1f5eff;--brand-soft:#e8efff;
+--ok:#16803c;--ok-bg:#e5f6ea;--watch:#a65f00;--watch-bg:#fff2d9;--avoid:#c0262d;--avoid-bg:#fde8e8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Figtree,"Noto Sans Devanagari",system-ui,sans-serif}
+main{max-width:820px;margin:0 auto;padding:16px 16px 56px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;margin:0;font-weight:800}
+.sub{color:var(--mute);margin:4px 0 12px}
+.seg{display:inline-flex;background:#e6ecf5;border-radius:12px;padding:3px;gap:2px}
+.seg button{border:0;background:none;padding:8px 14px;border-radius:9px;font:inherit;font-weight:600;color:var(--mute);cursor:pointer;min-height:40px}
+.seg button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px #0002}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:0;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700;cursor:pointer;min-height:48px}
+.btn.p{background:var(--brand);color:#fff}.btn.s{background:var(--brand-soft);color:var(--brand)}.btn.g{background:#eef2f7;color:var(--ink)}
+:focus-visible{outline:3px solid #7aa2ff;outline-offset:2px}
+.hint{color:var(--mute);font-size:14px;flex:1;min-width:200px}
+#cam{position:fixed;inset:0;background:#000;z-index:9;display:none;flex-direction:column}
+#cam video{flex:1;min-height:0;width:100%;object-fit:cover}#cam .bar{display:flex;gap:10px;justify-content:center;padding:14px}
+.verdict{border-radius:16px;padding:18px;border:1px solid}
+.verdict.ok{background:var(--ok-bg);border-color:#a8dcb8}.verdict.watch{background:var(--watch-bg);border-color:#f0cf8e}.verdict.avoid{background:var(--avoid-bg);border-color:#f0b4b6}
+.verdict h2{margin:2px 0 6px;font-size:22px;line-height:1.25}.verdict p{margin:0}
+.pname{font-size:13px;color:var(--mute);font-weight:600}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tag{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:#fff9;border:1px solid #0002}
+h3{font-size:17px;margin:24px 0 8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.kp{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.kp li{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:12px;background:#fff;border:1px solid var(--line)}
+.kp i{flex:none;width:12px;height:12px;border-radius:50%;margin-top:7px;background:var(--c)}
+.step{display:inline-flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px;font-size:14px;font-weight:600}
+.step button{width:36px;height:36px;border:0;border-radius:9px;background:var(--brand-soft);color:var(--brand);font:inherit;font-size:20px;font-weight:700;cursor:pointer}
+.step span{min-width:64px;text-align:center}
+.meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.meter{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.meter .big{font-size:26px;font-weight:800;line-height:1.1}.meter .big small{font-size:14px;font-weight:600;color:var(--mute)}
+.meter .lbl{font-weight:700;display:flex;justify-content:space-between;gap:8px}
+.dots{display:flex;gap:3px;flex-wrap:wrap;margin:8px 0;min-height:14px}.dots i{width:14px;height:14px;border-radius:50%;background:var(--c);display:block}
+.track{position:relative;height:10px;border-radius:9px;background:#e8edf4}
+.track b{display:block;height:100%;border-radius:9px;background:var(--c);max-width:100%}
+.track u{position:absolute;right:0;top:-4px;bottom:-4px;border-right:2px solid var(--ink)}
+.small{font-size:13px;color:var(--mute);margin-top:6px}
+.mix{display:flex;height:10px;border-radius:9px;overflow:hidden;margin:4px 0 10px;background:#e8edf4}.mix b{display:block}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{padding:7px 13px;border-radius:99px;border:1px solid var(--line);background:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.lnk{border:0;background:none;color:var(--brand);margin-left:auto}
+.ing{background:#fff;border:1px solid var(--line);border-left:6px solid var(--c);border-radius:14px;margin-top:8px}
+.ing.ok{--c:#7cc795}.ing.watch{--c:#e8a62d}.ing.avoid{--c:var(--avoid)}
+.ih{all:unset;box-sizing:border-box;display:grid;grid-template-columns:auto 1fr auto auto;gap:2px 10px;align-items:center;width:100%;padding:11px 14px;cursor:pointer}
+.ih:focus-visible{outline:3px solid #7aa2ff;border-radius:12px}
+.rank{color:var(--mute);font-weight:700;min-width:20px}
+.iname{font-weight:700;font-size:16.5px}
+.cat{grid-column:2/3;font-size:13.5px;color:var(--mute)}
+.chev{transition:transform .15s;color:var(--mute);grid-row:1/3;grid-column:4}.ing.open .chev{transform:rotate(180deg)}
+.pill{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:99px;grid-row:1/3;grid-column:3}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.watch{background:var(--watch-bg);color:var(--watch)}.pill.avoid{background:var(--avoid-bg);color:var(--avoid)}
+.ins{font-size:12px;background:#eef2f7;border-radius:6px;padding:1px 7px;font-weight:700;color:var(--mute);margin-left:4px}
+.body{display:none;padding:0 14px 13px 44px}.ing.open .body{display:block}
+.rows{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:14.5px}
+.rows dt{color:var(--mute);font-weight:700;white-space:nowrap}.rows dd{margin:0}
+.ibar{height:6px;border-radius:6px;background:#e8edf4;margin:0 0 8px}.ibar b{display:block;height:100%;border-radius:6px;background:#8aa2c8}
+.gl{display:grid;gap:8px}.gc{all:unset;box-sizing:border-box;cursor:pointer;display:block;background:#fff;border:1px solid var(--line);border-left:6px solid var(--c);border-radius:14px;padding:10px 14px}
+.gc.watch{--c:#e8a62d}.gc.avoid{--c:var(--avoid)}.gc:focus-visible{outline:3px solid #7aa2ff}
+.gc .pill{margin-left:8px}.gc .gs{display:block;color:var(--ink);font-size:14.5px;margin-top:3px}
+ul.l{margin:0;padding-left:20px}
+.foot{font-size:12.5px;color:var(--mute);margin-top:24px}
+.err{background:var(--avoid-bg);color:var(--avoid);padding:12px 14px;border-radius:12px;font-weight:600;margin-top:14px}
+.spin{display:flex;gap:12px;align-items:center;padding:26px;justify-content:center;color:var(--mute);font-weight:600}
+.spin i{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:r 1s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+@media(max-width:560px){.rows{grid-template-columns:1fr}.rows dt{margin-top:4px}.body{padding-left:14px}}
+@media(prefers-reduced-motion:reduce){.spin i{animation-duration:3s}}
+
+.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:#ffffffe8;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800}
+.logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#1f5eff,#12b5a0);color:#fff;display:grid;place-items:center;font-size:15px}
+main h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:18px 0 6px}
+.panel{box-shadow:0 1px 2px #1f2f4a0f,0 6px 20px #1f2f4a0a}
+.btn{border-radius:14px}.btn.p{box-shadow:0 4px 12px #1f5eff44}
+.thumb{float:right;width:76px;height:76px;object-fit:cover;border-radius:14px;margin:0 0 6px 12px;border:2px solid #fff}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.tile{border:2px solid var(--line);background:#fff;border-radius:14px;padding:10px 12px;font:inherit;cursor:pointer;text-align:left;display:flex;align-items:baseline;gap:8px}
+.tile b{font-size:26px;line-height:1;color:var(--c)}.tile span{font-weight:700;color:var(--mute)}
+.tile.ok{--c:var(--ok)}.tile.watch{--c:#c27a00}.tile.avoid{--c:var(--avoid)}
+.tile[aria-pressed=true]{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+.tools input{flex:1;min-width:160px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;background:#fff}
+.pn{font-weight:600;color:var(--ink)}.cat{line-height:1.35}
+.mini{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 11px 44px}.mini span{font-size:12.5px;background:#f1f4f9;border-radius:99px;padding:2px 9px;color:#33425a}
+.ing.open .mini{display:none}.end{margin-top:22px}
+@media(max-width:560px){.mini{padding-left:14px}main h1{font-size:25px}.tile b{font-size:22px}}
+
+.hero{background:linear-gradient(135deg,#eaf1ff,#e4f7f2);border-color:#cfe0fb}
+.hero .btn.p{min-height:56px;font-size:17px;padding:14px 26px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.stp{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:4px}
+.stp i{font-style:normal;width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800}
+.stp span{color:var(--mute);font-size:14.5px}
+.tags.big .tag{font-size:14px;padding:6px 14px;background:#fff}
+#home[hidden]{display:none}
+
+
+.warn{background:var(--watch-bg);color:#6b4100;border:1px solid #f0cf8e;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-weight:600}
+.freq{margin-top:10px;background:var(--brand-soft);border-radius:14px;padding:12px 14px}.freq b{display:block;color:var(--brand);font-size:13.5px}
+.tag.nv.n4{background:var(--avoid-bg);color:var(--avoid)}.tag.nv.n3{background:var(--watch-bg);color:var(--watch)}.tag.nv.n1,.tag.nv.n2{background:var(--ok-bg);color:var(--ok)}
+.nf{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:4px 14px}.nf summary{cursor:pointer;font-weight:700;padding:10px 0}
+.nf table{width:100%;border-collapse:collapse;margin-bottom:8px}.nf td{padding:7px 0;border-top:1px solid var(--line);font-size:14.5px}.nf td:last-child{text-align:right;color:var(--mute);font-size:13px}
+button.stp{font:inherit;color:inherit;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}button.stp:hover{border-color:var(--brand);transform:translateY(-2px)}
+.dots i{animation:pop .35s both}@keyframes pop{from{transform:scale(0);opacity:0}}.track b{transition:width .3s}
+.ck{display:flex;gap:10px;align-items:flex-start;padding:8px 2px;cursor:pointer}.ck input{width:22px;height:22px;accent-color:var(--brand);flex:none;margin:1px 0 0}
+.drag .hero{outline:3px dashed var(--brand);outline-offset:4px}
+@media(prefers-reduced-motion:reduce){.dots i{animation:none}button.stp:hover{transform:none}.track b{transition:none}}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand"><span class="logo">L</span>Label Platform</div><div class="seg" role="group" aria-label="Language" id="langs"></div></div>
+<main>
+<h1 id="t-title"></h1>
+<p class="sub" id="t-sub"></p>
+<section class="panel hero"><div class="actions">
+  <button class="btn p" id="bCam"></button><button class="btn s" id="bUp"></button><button class="btn g" id="bSample"></button><span class="hint" id="t-drop"></span>
+  <input type="file" id="file" accept="image/*" hidden></div></section>
+<div id="home"></div>
+<div id="out" aria-live="polite"></div>
+<p class="foot" id="t-foot"></p>
+</main>
+<div id="cam"><video id="vid" playsinline muted></video><div class="bar"><button class="btn p" id="bSnap"></button><button class="btn g" id="bClose"></button></div></div>
+
+<script>
+const T={
+en:{title:"What's inside this label?",sub:"Scan any food or drink label. See sugar, salt and fat in teaspoons, and what each ingredient does to your body.",
+ drop:"Photograph the ingredients list and nutrition table.",cam:"📷 Open camera",up:"⬆ Upload photo",snap:"Capture",close:"Close",busy:"Reading the label…",
+ per:{serving:"Per serving",'100g':"Per 100 g/ml"},sugar:"Sugar",salt:"Salt",satfat:"Saturated fat",tsp:"tsp",of:"of daily limit",
+ limit:"Daily limits used: sugar 25 g, sodium 2000 mg (5 g salt), saturated fat 20 g (adult, WHO/ICMR-based).",
+ key:"What to know",portion:{serving:"Servings I eat",'100g':"× 100 g I eat"},ings:"Ingredients, in label order",
+ ingHint:"The first ingredient is the largest. Tap an ingredient for details.",all:"All",watch:"Watch + Limit",avoid:"Limit",open:"Expand all",shut:"Collapse all",
+ role:"Why it's added",aff:"Can affect",reg:"If eaten regularly",who:"Limit if",ev:"Evidence",evl:{strong:"strong",moderate:"moderate",limited:"limited",none:"none"},
+ side:"Side effects",dose:"Even at normal amounts",regl:"Regulation",glance:"Harmful ingredients: side effects at a glance",share:"Share summary",nf:"Full nutrition facts",nl:{kcal:"Energy",totalFatG:"Total fat",satFatG:"Saturated fat",transFatG:"Trans fat",sugarG:"Total sugar",addedSugarG:"Added sugar",sodiumMg:"Sodium",fibreG:"Fibre",proteinG:"Protein"},fq:"How often can you eat this?",bs:"Basis",nova:{1:"Unprocessed",2:"Culinary ingredient",3:"Processed",4:"Ultra-processed"},rq:"Parts of the label were hard to read. Check the pack before relying on this.",again:"Scan another",copied:"Copied!",search:"Search ingredients…",lv:{ok:"OK",watch:"Watch",avoid:"Limit"},safe:"No known concern at normal amounts.",swaps:"Better swaps",allergens:"Allergens printed on label",
+ notLabel:"Couldn't read a label in this photo. Try a closer, brighter photo.",
+ err:{daily_cap:"Today's free scans are used up. Try tomorrow.",hourly_cap:"Too many scans this hour. Try later.",google_limit:"The free AI quota is busy. Wait a minute and retry.",bad_image:"That image could not be used.",no_key:"Server has no API key set.",upstream:"Could not read the label. Please retry.",net:"Network problem. Check your connection.",cam:"Camera not available. Use Upload instead."},
+ foot:"Read from a photo by AI, so double-check against the pack. Not medical advice. Photos are not saved."},
+hi:{title:"इस लेबल में असल में क्या है?",sub:"किसी भी खाने-पीने के लेबल को स्कैन करें। चीनी, नमक और फैट चम्मच में देखें, और जानें हर सामग्री शरीर पर क्या असर डालती है।",
+ drop:"सामग्री की सूची और न्यूट्रिशन टेबल की फ़ोटो लें।",cam:"📷 कैमरा खोलें",up:"⬆ फ़ोटो अपलोड करें",snap:"फ़ोटो लें",close:"बंद करें",busy:"लेबल पढ़ रहे हैं…",
+ per:{serving:"प्रति सर्विंग",'100g':"प्रति 100 ग्राम/मिली"},sugar:"चीनी",salt:"नमक",satfat:"सैचुरेटेड फैट",tsp:"चम्मच",of:"रोज़ की सीमा का",
+ limit:"इस्तेमाल की गई रोज़ की सीमा: चीनी 25 ग्राम, सोडियम 2000 मिग्रा (5 ग्राम नमक), सैचुरेटेड फैट 20 ग्राम (वयस्क, WHO/ICMR आधारित)।",
+ key:"ज़रूरी बातें",portion:{serving:"मैं कितनी सर्विंग खाता हूँ",'100g':"× 100 ग्राम जितना खाता हूँ"},ings:"सामग्री, लेबल के क्रम में",
+ ingHint:"पहली सामग्री सबसे ज़्यादा होती है। विवरण के लिए किसी सामग्री को छुएँ।",all:"सभी",watch:"ध्यान दें + कम करें",avoid:"कम करें",open:"सब खोलें",shut:"सब बंद करें",
+ role:"क्यों डालते हैं",aff:"किस पर असर",reg:"रोज़ खाने पर",who:"इन्हें कम करना चाहिए",ev:"प्रमाण",evl:{strong:"मज़बूत",moderate:"मध्यम",limited:"सीमित",none:"नहीं"},
+ side:"साइड इफ़ेक्ट",dose:"सामान्य मात्रा में भी",regl:"नियम",glance:"हानिकारक सामग्री: साइड इफ़ेक्ट एक नज़र में",share:"सारांश शेयर करें",nf:"पूरे पोषण मान",nl:{kcal:"ऊर्जा",totalFatG:"कुल फैट",satFatG:"सैचुरेटेड फैट",transFatG:"ट्रांस फैट",sugarG:"कुल चीनी",addedSugarG:"अतिरिक्त चीनी",sodiumMg:"सोडियम",fibreG:"फाइबर",proteinG:"प्रोटीन"},fq:"इसे कितनी बार खा सकते हैं?",bs:"आधार",nova:{1:"बिना प्रोसेस",2:"पाक सामग्री",3:"प्रोसेस्ड",4:"अति-प्रोसेस्ड"},rq:"लेबल के कुछ हिस्से पढ़ने में मुश्किल थे। भरोसा करने से पहले पैक जाँच लें।",again:"दूसरा स्कैन करें",copied:"कॉपी हो गया!",search:"सामग्री खोजें…",lv:{ok:"ठीक",watch:"ध्यान दें",avoid:"कम करें"},safe:"सामान्य मात्रा में कोई ज्ञात चिंता नहीं।",swaps:"बेहतर विकल्प",allergens:"लेबल पर छपी एलर्जी",
+ notLabel:"इस फ़ोटो में लेबल नहीं पढ़ा जा सका। पास से, ज़्यादा रोशनी में फ़ोटो लें।",
+ err:{daily_cap:"आज के मुफ़्त स्कैन ख़त्म हो गए। कल फिर कोशिश करें।",hourly_cap:"इस घंटे बहुत स्कैन हो गए। बाद में कोशिश करें।",google_limit:"मुफ़्त AI कोटा व्यस्त है। एक मिनट बाद दोबारा करें।",bad_image:"यह फ़ोटो इस्तेमाल नहीं हो सकी।",no_key:"सर्वर में API key सेट नहीं है।",upstream:"लेबल नहीं पढ़ पाए। दोबारा कोशिश करें।",net:"नेटवर्क की समस्या। कनेक्शन जाँचें।",cam:"कैमरा उपलब्ध नहीं। अपलोड इस्तेमाल करें।"},
+ foot:"AI ने फ़ोटो से पढ़ा है, इसलिए पैक से मिलान कर लें। यह चिकित्सा सलाह नहीं है। फ़ोटो सेव नहीं होती।"},
+hinglish:{title:"Is label mein asal mein kya hai?",sub:"Kisi bhi food ya drink label ko scan karein. Sugar, namak aur fat teaspoon mein dekhein, aur jaanein har ingredient body par kya asar daalta hai.",
+ drop:"Ingredients list aur nutrition table ki photo lein.",cam:"📷 Camera kholein",up:"⬆ Photo upload karein",snap:"Photo lein",close:"Band karein",busy:"Label padh rahe hain…",
+ per:{serving:"Per serving",'100g':"Per 100 g/ml"},sugar:"Sugar",salt:"Namak",satfat:"Saturated fat",tsp:"tsp",of:"daily limit ka",
+ limit:"Daily limits: sugar 25 g, sodium 2000 mg (5 g namak), saturated fat 20 g (adult, WHO/ICMR based).",
+ key:"Zaroori baatein",portion:{serving:"Main kitni servings khata hoon",'100g':"× 100 g jitna khata hoon"},ings:"Ingredients, label ke order mein",
+ ingHint:"Pehla ingredient sabse zyada hota hai. Detail ke liye ingredient par tap karein.",all:"Sab",watch:"Dhyan + Kam karein",avoid:"Kam karein",open:"Sab kholein",shut:"Sab band karein",
+ role:"Kyun daalte hain",aff:"Kispe asar",reg:"Roz khane par",who:"Inhe kam karna chahiye",ev:"Evidence",evl:{strong:"strong",moderate:"medium",limited:"limited",none:"nahi"},
+ side:"Side effects",dose:"Normal matra mein bhi",regl:"Niyam",glance:"Harmful ingredients: side effects ek nazar mein",share:"Summary share karein",nf:"Poore nutrition facts",nl:{kcal:"Energy",totalFatG:"Total fat",satFatG:"Saturated fat",transFatG:"Trans fat",sugarG:"Total sugar",addedSugarG:"Added sugar",sodiumMg:"Sodium",fibreG:"Fibre",proteinG:"Protein"},fq:"Ise kitni baar kha sakte hain?",bs:"Aadhar",nova:{1:"Unprocessed",2:"Cooking ingredient",3:"Processed",4:"Ultra-processed"},rq:"Label ke kuch hisse padhne mein mushkil the. Bharosa karne se pehle pack check kar lein.",again:"Dusra scan karein",copied:"Copy ho gaya!",search:"Ingredient dhoondhein…",lv:{ok:"Theek",watch:"Dhyan dein",avoid:"Kam karein"},safe:"Normal matra mein koi known concern nahi.",swaps:"Behtar options",allergens:"Label par chhapi allergens",
+ notLabel:"Is photo mein label padh nahi paaye. Paas se, zyada light mein photo lein.",
+ err:{daily_cap:"Aaj ke free scans khatam. Kal try karein.",hourly_cap:"Is ghante bohot scans ho gaye. Baad mein try karein.",google_limit:"Free AI quota busy hai. Ek minute baad retry karein.",bad_image:"Ye image use nahi ho saki.",no_key:"Server mein API key nahi hai.",upstream:"Label nahi padh paaye. Dobara try karein.",net:"Network problem. Connection check karein.",cam:"Camera available nahi. Upload use karein."},
+ foot:"AI ne photo se padha hai, isliye pack se match kar lein. Medical advice nahi hai. Photos save nahi hoti."}
+};
+const LIM={s:25,n:2000,f:20},COL={ok:'#16803c',watch:'#e08a00',avoid:'#c0262d'};
+const $=id=>document.getElementById(id),e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>typeof v==='number'&&isFinite(v),lvl=p=>p>=100?'avoid':p>=50?'watch':'ok';
+let lang=localStorage.lang||'en',img=null,cache={},cur=null,mult=1,filter='all',openSet=new Set(),stream=null,qry='',isSample=false;
+if(!T[lang])lang='en';
+
+function chrome(){
+  const t=T[lang];document.documentElement.lang=lang==='hi'?'hi':'en';
+  $('t-title').textContent=t.title;$('t-sub').textContent=t.sub;$('t-foot').textContent=t.foot;$('t-drop').textContent=t.drop+' '+H[lang].drp;
+  $('bCam').textContent=t.cam;$('bSample').textContent=H[lang].sample;homeUI();$('bUp').textContent=t.up;$('bSnap').textContent=t.snap;$('bClose').textContent=t.close;
+  $('langs').innerHTML=[['en','English'],['hi','हिन्दी'],['hinglish','Hinglish']].map(([k,n])=>`<button data-l="${k}" aria-pressed="${k===lang}">${n}</button>`).join('');
+}
+$('langs').onclick=ev=>{const b=ev.target.closest('[data-l]');if(b){lang=localStorage.lang=b.dataset.l;chrome();if(img)run();else if(isSample)sample();}};
+
+// ---- image in -------------------------------------------------------------
+const toJpg=(src,w,h)=>{const k=Math.min(1,1600/Math.max(w,h)),c=document.createElement('canvas');c.width=w*k;c.height=h*k;c.getContext('2d').drawImage(src,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.85).split(',')[1];};
+$('bUp').onclick=()=>$('file').click();
+const take=f=>{if(!f||!f.type.startsWith('image/'))return;const i=new Image();i.onload=()=>{img=toJpg(i,i.width,i.height);cache={};run();};i.src=URL.createObjectURL(f);};
+$('file').onchange=()=>{take($('file').files[0]);$('file').value='';};
+addEventListener('dragover',v=>{v.preventDefault();document.body.classList.add('drag');});
+addEventListener('dragleave',v=>{if(!v.relatedTarget)document.body.classList.remove('drag');});
+addEventListener('drop',v=>{v.preventDefault();document.body.classList.remove('drag');take(v.dataTransfer.files[0]);});
+addEventListener('paste',v=>take([...v.clipboardData.files][0]));
+$('bCam').onclick=async()=>{try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920}}});
+  $('vid').srcObject=stream;await $('vid').play();$('cam').style.display='flex';}catch{fail('cam');}};
+const stop=()=>{stream&&stream.getTracks().forEach(t=>t.stop());$('cam').style.display='none';};
+$('bClose').onclick=stop;
+$('bSnap').onclick=()=>{const v=$('vid');img=toJpg(v,v.videoWidth,v.videoHeight);stop();cache={};run();};
+
+// ---- scan -----------------------------------------------------------------
+const fail=k=>{$('out').innerHTML=`<div class="err">${e(T[lang].err[k]||T[lang].err.upstream)}</div>`;};
+async function run(){
+  isSample=false;$('home').hidden=true;
+  if(cache[lang])return render(cache[lang]);
+  $('out').innerHTML=`<div class="spin"><i></i>${e(T[lang].busy)}</div>`;const my=img;
+  try{
+    const r=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:img,mime:'image/jpeg',lang})});
+    const d=await r.json();if(my!==img)return;
+    if(!r.ok)return fail(d.error);
+    cache[lang]=d;render(d);
+  }catch{fail('net');}
+}
+
+// ---- render ---------------------------------------------------------------
+function meter(label,big,unit,pct,tsp,note){
+  const c=COL[lvl(pct)],n=Math.min(Math.ceil(tsp||0),14);
+  return `<div class="meter" style="--c:${c}"><div class="lbl"><span>${label}</span><span style="color:${c}">${Math.round(pct)}% ${e(T[lang].of)}</span></div>
+  <div class="big">${big} <small>${unit}</small></div>${tsp?`<div class="dots">${'<i></i>'.repeat(n)}</div>`:''}
+  <div class="track"><b style="width:${Math.min(pct,100)}%"></b><u></u></div><div class="small">${note}</div></div>`;
+}
+function meters(){
+  const t=T[lang],n=cur.nutrition||{},b=t.per[n.basis]||'',m=[],sg=(num(n.addedSugarG)?n.addedSugarG:n.sugarG)*mult;
+  if(num(sg))m.push(meter(t.sugar,+(sg/4).toFixed(1),t.tsp,sg/LIM.s*100,sg/4,`${+sg.toFixed(1)} g`));
+  if(num(n.sodiumMg)){const mg=n.sodiumMg*mult,g=mg*2.5/1000;m.push(meter(t.salt,+(g/6).toFixed(2),t.tsp,mg/LIM.n*100,g/6,`${Math.round(mg)} mg sodium = ${g.toFixed(1)} g`));}
+  if(num(n.satFatG)){const f=n.satFatG*mult;m.push(meter(t.satfat,+f.toFixed(1),'g',f/LIM.f*100,null,num(n.totalFatG)?`Total fat ${+(n.totalFatG*mult).toFixed(1)} g ≈ ${(n.totalFatG*mult/4.5).toFixed(1)} ${t.tsp}`:''));}
+  $('mt').innerHTML=m.join('');$('mv').textContent=mult+'×';nfUI();
+}
+function nfUI(){
+  const t=T[lang],n=cur.nutrition||{},U={kcal:'kcal',sodiumMg:'mg'},P={sugarG:LIM.s,addedSugarG:LIM.s,sodiumMg:LIM.n,satFatG:LIM.f};
+  const rows=['kcal','totalFatG','satFatG','transFatG','sugarG','addedSugarG','sodiumMg','fibreG','proteinG'].filter(k=>num(n[k])).map(k=>{const v=n[k]*mult;
+    return `<tr><td>${e(t.nl[k])}</td><td><b>${+v.toFixed(1)}</b> ${U[k]||'g'}</td><td>${P[k]?Math.round(v/P[k]*100)+'% '+e(t.of):''}</td></tr>`;}).join('');
+  $('nfb').innerHTML=rows;$('nfd').hidden=!rows;
+}
+function ings(){
+  const t=T[lang],ig=cur.ingredients||[];
+  $('ings').innerHTML=ig.map((x,i)=>({x,i})).filter(({x})=>(filter==='all'||x.level===filter)&&(!qry||[x.name,x.plainName,x.category,x.ins].join(' ').toLowerCase().includes(qry))).map(({x,i})=>{
+    const se=(x.sideEffects||[]).length?`<ul class="l">${x.sideEffects.map(z=>`<li>${e(z)}</li>`).join('')}</ul>`:'',rows=[[t.role,e(x.role)],[t.aff,e(x.affects)],[t.side,se],[t.dose,e(x.atNormalDose)],[t.reg,e(x.regularUse)],[t.who,e(x.avoidIf)],[t.regl,e(x.regulatory)],[t.bs,e(x.basis)]].filter(r=>r[1]),o=openSet.has(i),bad=x.affects||x.regularUse||se,mini=(x.sideEffects||[]).length?`<div class="mini">${x.sideEffects.slice(0,2).map(z=>`<span>${e(z)}</span>`).join('')}</div>`:'';
+    return `<div class="ing ${e(x.level)}${o?' open':''}" id="ing${i}"><button class="ih" data-i="${i}" aria-expanded="${o}"><span class="rank">${i+1}</span>
+      <span class="iname">${e(x.name)}${x.ins?`<span class="ins">${e(x.ins)}</span>`:''}</span><span class="pill ${e(x.level)}">${e(t.lv[x.level])}</span><span class="chev">▾</span>
+      <span class="cat"><b class="pn">${e(x.plainName)}</b><br>${e([x.category,num(x.percent)?x.percent+'%':''].filter(Boolean).join(' · '))}</span></button>${mini}
+      <div class="body">${num(x.percent)?`<div class="ibar"><b style="width:${Math.min(x.percent,100)}%"></b></div>`:''}
+      <dl class="rows">${rows.map(r=>`<dt>${e(r[0])}</dt><dd>${r[1]}</dd>`).join('')}${bad?`<dt>${e(t.ev)}</dt><dd>${e(t.evl[x.evidence]||'')}</dd>`:`<dt></dt><dd>✓ ${e(t.safe)}</dd>`}</dl></div></div>`;}).join('');
+}
+function render(d){
+  const t=T[lang];cur=d;mult=1;filter='all';qry='';openSet=new Set();
+  if(!d.isLabel)return $('out').innerHTML=`<div class="err">${e(t.notLabel)}</div>`;
+  const v=d.verdict,n=d.nutrition||{},ig=d.ingredients||[],cnt=k=>ig.filter(x=>x.level===k).length,harm=ig.map((x,i)=>({x,i})).filter(({x})=>x.level!=='ok'&&(x.sideEffects||[]).length);
+  openSet=new Set(ig.map((x,i)=>x.level==='ok'?-1:i).filter(i=>i>=0));
+  $('out').innerHTML=`<div class="panel">${d.readQuality&&d.readQuality.level!=='high'?`<div class="warn">⚠ ${e(t.rq)}${d.readQuality.note?' '+e(d.readQuality.note):''}</div>`:''}<div class="verdict ${e(v.level)}">${img?`<img class="thumb" alt="" src="data:image/jpeg;base64,${img}">`:''}<div class="pname">${e(d.productName)}</div><h2>${e(v.headline)}</h2><p>${e(v.summary)}</p>
+   <div class="tags">${[1,2,3,4].includes(d.nova)?`<span class="tag nv n${d.nova}">NOVA ${d.nova}: ${e(t.nova[d.nova])}</span>`:''}${(d.flags||[]).map(f=>`<span class="tag">${e(f)}</span>`).join('')}</div></div>
+   ${d.frequency?`<div class="freq"><b>${e(t.fq)}</b> ${e(d.frequency)}</div>`:''}
+   ${(d.keyPoints||[]).length?`<h3>${e(t.key)}</h3><ul class="kp">${d.keyPoints.map(k=>`<li><i style="--c:${COL[k.level]||COL.watch}"></i><span>${e(k.text)}</span></li>`).join('')}</ul>`:''}
+   <h3><span>${e(t.per[n.basis]||'')}${n.servingSize?' · '+e(n.servingSize):''}</span>
+     <span class="step"><button data-s="-.5" aria-label="−">−</button><span id="mv"></span><button data-s=".5" aria-label="+">+</button></span></h3>
+   <div class="small" style="margin:-4px 0 8px">${e((t.portion[n.basis]||t.portion.serving))}</div>
+   <div class="meters" id="mt"></div><details id="nfd" class="nf"><summary>${e(t.nf)}</summary><table><tbody id="nfb"></tbody></table></details><div class="small">${e(t.limit)}</div>
+   ${harm.length?`<h3>${e(t.glance)}</h3><div class="gl">${harm.map(({x,i})=>`<button class="gc ${e(x.level)}" data-g="${i}"><b>${e(x.name)}${x.ins?` (${e(x.ins)})`:''}</b><span class="pill ${e(x.level)}">${e(t.lv[x.level])}</span><span class="gs">${x.sideEffects.slice(0,4).map(e).join(' · ')}</span></button>`).join('')}</div>`:''}
+   <h3>${e(t.ings)}</h3><div class="small" style="margin:-4px 0 8px">${e(t.ingHint)}</div>
+   <div class="tiles" id="flt">${['avoid','watch','ok'].map(k=>`<button class="tile ${k}" data-f="${k}" aria-pressed="false"><b>${cnt(k)}</b><span>${e(t.lv[k])}</span></button>`).join('')}</div>
+   <div class="tools"><input id="q" type="search" placeholder="${e(t.search)}" aria-label="${e(t.search)}"><button class="chip" data-f="all" aria-pressed="true">${e(t.all)} (${ig.length})</button><button class="chip lnk" id="tg">${e(t.open)}</button></div><div id="ings"></div>
+   ${(d.allergens||[]).length?`<h3>${e(t.allergens)}</h3><div class="tags">${d.allergens.map(a=>`<span class="tag" style="background:var(--watch-bg)">${e(a)}</span>`).join('')}</div>`:''}
+   ${(d.swaps||[]).length?`<h3>${e(t.swaps)}</h3><ul class="l">${d.swaps.map(s=>`<li>${e(s)}</li>`).join('')}</ul>`:''}
+   <div class="actions end"><button class="btn p" data-share>${e(t.share)}</button><button class="btn g" data-top>${e(t.again)}</button></div></div>`;
+  meters();ings();
+  $('out').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('out').onclick=ev=>{
+  if(!cur)return;const t=T[lang];let b;
+  if(b=ev.target.closest('[data-share]')){const v=cur.verdict,txt=`${cur.productName}: ${v.headline}\n${v.summary}\n`+(cur.keyPoints||[]).map(k=>'• '+k.text).join('\n');
+    if(navigator.share)navigator.share({title:cur.productName,text:txt}).catch(()=>{});else navigator.clipboard.writeText(txt).then(()=>{b.textContent=t.copied;});}
+  else if(ev.target.closest('[data-top]'))scrollTo({top:0,behavior:'smooth'});
+  else if(b=ev.target.closest('[data-s]')){mult=Math.min(10,Math.max(.5,mult+ +b.dataset.s));meters();}
+  else if(b=ev.target.closest('[data-f]')){filter=(b.dataset.f===filter&&filter!=='all')?'all':b.dataset.f;$('out').querySelectorAll('[data-f]').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f===filter));ings();}
+  else if(b=ev.target.closest('[data-g]')){const i=+b.dataset.g;filter='all';$('out').querySelectorAll('[data-f]').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f==='all'));openSet.add(i);ings();$('ing'+i).scrollIntoView({behavior:'smooth',block:'center'});}
+  else if(b=ev.target.closest('.ih')){const i=+b.dataset.i;openSet.has(i)?openSet.delete(i):openSet.add(i);ings();}
+  else if(ev.target.closest('#tg')){const all=openSet.size<(cur.ingredients||[]).length;openSet=all?new Set(cur.ingredients.map((_,i)=>i)):new Set();$('tg').textContent=all?t.shut:t.open;ings();}
+};
+
+let di=0,dq=1,rk=new Set();
+const H={
+en:{sample:"Try a sample",how:"How it works (tap a step)",st:[["Snap","Open the camera and photograph the ingredients list and nutrition table"],["Read","See a sample of what the AI reads from a pack"],["Know","Try the teaspoon check below"]],
+ dt:"See it in teaspoons",dd:"Tap a food to see what one serving holds. Typical values, so check your own pack.",
+ it:[["Cola, 330 ml","s",35],["Mango drink, 200 ml","s",24],["Chocolate bar, 40 g","s",22],["Instant noodles, 1 pack","n",880],["Potato chips, 50 g","n",330]],
+ x:"How many?",m:["Well within the day's limit.","A big share of the day's limit.","More than the whole day's limit."],tips:"Ready to scan? Tick as you go",tp:["Good light, no shadow or glare","Hold steady and fill the frame with the text","Ingredients and nutrition table in one clear shot"],go:"Open camera",drp:"You can also drop or paste a photo."},
+hi:{sample:"नमूना देखें",how:"यह कैसे काम करता है (किसी चरण को छुएँ)",st:[["फ़ोटो लें","कैमरा खोलें और सामग्री व न्यूट्रिशन टेबल की फ़ोटो लें"],["पढ़ना","देखें AI पैक से क्या पढ़ता है (नमूना)"],["जानें","नीचे चम्मच वाली जाँच आज़माएँ"]],
+ dt:"चम्मच में देखें",dd:"कोई खाना छुएँ और देखें एक सर्विंग में कितना है। ये सामान्य मान हैं, अपना पैक भी जाँचें।",
+ it:[["कोला, 330 मिली","s",35],["आम का ड्रिंक, 200 मिली","s",24],["चॉकलेट बार, 40 ग्राम","s",22],["इंस्टेंट नूडल्स, 1 पैकेट","n",880],["आलू चिप्स, 50 ग्राम","n",330]],
+ x:"कितने?",m:["दिन की सीमा के भीतर।","दिन की सीमा का बड़ा हिस्सा।","पूरे दिन की सीमा से ज़्यादा।"],tips:"स्कैन के लिए तैयार? टिक करते जाएँ",tp:["अच्छी रोशनी, छाया या चमक नहीं","हाथ स्थिर रखें और अक्षरों से फ्रेम भरें","सामग्री और न्यूट्रिशन टेबल एक साफ़ फ़ोटो में"],go:"कैमरा खोलें",drp:"आप फ़ोटो यहाँ ड्रॉप या पेस्ट भी कर सकते हैं।"},
+hinglish:{sample:"Sample dekhein",how:"Ye kaise kaam karta hai (step par tap karein)",st:[["Photo lein","Camera kholein aur ingredients list aur nutrition table ki photo lein"],["Padhna","Dekhein AI pack se kya padhta hai (sample)"],["Jaanein","Neeche teaspoon check try karein"]],
+ dt:"Teaspoon mein dekhein",dd:"Kisi food par tap karein aur dekhein ek serving mein kitna hai. Typical values hain, apna pack bhi check karein.",
+ it:[["Cola, 330 ml","s",35],["Mango drink, 200 ml","s",24],["Chocolate bar, 40 g","s",22],["Instant noodles, 1 packet","n",880],["Aloo chips, 50 g","n",330]],
+ x:"Kitne?",m:["Din ki limit ke andar.","Din ki limit ka bada hissa.","Poore din ki limit se zyada."],tips:"Scan ke liye ready? Tick karte jaayein",tp:["Achhi light, shadow ya glare nahi","Haath steady rakhein aur text se frame bharein","Ingredients aur nutrition table ek saaf photo mein"],go:"Camera kholein",drp:"Aap photo yahan drop ya paste bhi kar sakte hain."}};
+function demo(){
+  const m=H[lang],t=T[lang],[,k,v]=m.it[di],s=k==='s',x=v*dq,g=s?x:x*2.5/1000,tsp=s?x/4:g/6,pct=x/(s?LIM.s:LIM.n)*100,L=lvl(pct),c=COL[L],n=Math.min(Math.ceil(tsp),20);
+  document.querySelectorAll('#dc [data-d]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.d===di));$('dqv').textContent=dq+'×';
+  $('dr').innerHTML=`<div class="meter" style="--c:${c};margin-top:10px"><div class="lbl"><span>${e(s?t.sugar:t.salt)}</span><span style="color:${c}">${Math.round(pct)}% ${e(t.of)}</span></div>
+  <div class="big">${+tsp.toFixed(1)} <small>${e(t.tsp)}</small></div><div class="dots">${Array.from({length:n},(_,i)=>`<i style="animation-delay:${i*45}ms"></i>`).join('')}${tsp>20?'…':''}</div>
+  <div class="track"><b style="width:${Math.min(pct,100)}%"></b><u></u></div><div class="small">${s?x+' g':x+' mg sodium = '+g.toFixed(1)+' g'} · <b>${e(m.m[['ok','watch','avoid'].indexOf(L)])}</b></div></div>`;
+}
+function rf(){const m=H[lang],n=rk.size,N=m.tp.length;$('rf').innerHTML=`<div class="track" style="--c:var(--ok);margin:10px 0"><b style="width:${n/N*100}%"></b></div>`+(n===N?`<button class="btn p" data-go>${e(m.go)}</button>`:`<div class="small">${n}/${N}</div>`);}
+function homeUI(){const m=H[lang];$('home').innerHTML=`<h3>${m.how}</h3><div class="steps">${m.st.map((s,i)=>`<button class="stp" data-st="${i}"><i>${i+1}</i><b>${s[0]}</b><span>${s[1]}</span></button>`).join('')}</div>
+ <h3>${m.dt}</h3><div class="small" style="margin:-4px 0 8px">${m.dd}</div><div class="panel" id="dm" style="margin-top:0"><div class="chips" id="dc">${m.it.map((x,i)=>`<button class="chip" data-d="${i}">${e(x[0])}</button>`).join('')}</div>
+ <div class="actions" style="margin-top:10px"><span class="small">${m.x}</span><span class="step"><button data-q="-1" aria-label="−">−</button><span id="dqv"></span><button data-q="1" aria-label="+">+</button></span></div><div id="dr"></div></div>
+ <h3>${m.tips}</h3><div class="panel" id="rd" style="margin-top:0">${m.tp.map((x,i)=>`<label class="ck"><input type="checkbox" data-r="${i}"${rk.has(i)?' checked':''}><span>${x}</span></label>`).join('')}<div id="rf"></div></div>`;demo();rf();}
+$('home').onclick=ev=>{let b;
+  if(b=ev.target.closest('[data-d]')){di=+b.dataset.d;demo();}
+  else if(b=ev.target.closest('[data-q]')){dq=Math.min(4,Math.max(1,dq+ +b.dataset.q));demo();}
+  else if(ev.target.closest('[data-go]'))$('bCam').click();
+  else if(b=ev.target.closest('[data-st]')){[()=>$('bCam').click(),sample,()=>$('dm').scrollIntoView({behavior:'smooth',block:'center'})][+b.dataset.st]();}};
+$('home').onchange=ev=>{const c=ev.target.closest('[data-r]');if(c){c.checked?rk.add(+c.dataset.r):rk.delete(+c.dataset.r);rf();}};
+const SN={kcal:320,fibreG:2.1,proteinG:7,transFatG:0,sugarG:1.2,sodiumMg:880,satFatG:7.2,totalFatG:14,basis:'serving',servingSize:'70 g'};
+const SL={
+en:{n:"Masala Instant Noodles (sample)",h:"Very salty, fried and heavily processed",s:"One pack gives 44% of the day's sodium limit and 36% of saturated fat. Fine as an occasional treat, not a daily meal.",f:["Ultra-processed","High sodium","Contains palm oil"],
+ k:["One pack has 880 mg sodium: 44% of the daily limit.","7.2 g saturated fat, mostly from palm oil: 36% of the daily limit.","Flavour enhancer (INS 621) can trigger headaches in sensitive people."],a:["Wheat (gluten)"],q:"Occasional treat: one pack at most, once a week, with vegetables added and half the masala.",b:["WHO: saturated fat under 10% of energy","JECFA/EFSA ADI; FSSAI permitted, not for infants",""],w:["Choose roasted chana or vegetable poha.","If you eat noodles, use half the masala and add vegetables."],
+ i:[["Refined palm oil","Cheap vegetable oil from palm fruit","Refined fat","Fries the noodles and keeps them shelf-stable","Heart and blood vessels",["Raises LDL (bad) cholesterol","Adds to saturated fat load","May cause weight gain when eaten daily"],"About half its fat is saturated, so even one pack uses a big share of the day's limit.","Regular intake over years can raise heart-disease risk.","People with high cholesterol, heart disease or diabetes","","strong"],
+ ["Flavour enhancer (INS 621)","Savoury taste booster (monosodium glutamate)","Flavour enhancer","Makes the masala taste stronger","Nerves and appetite",["Headache or flushing in sensitive people","Makes it easy to overeat salty food","Adds extra sodium"],"FSSAI and WHO consider it safe at normal amounts; effects depend on dose and show mostly in sensitive people.","Hard-to-stop cravings for salty snacks.","People prone to migraine or MSG reactions","Permitted by FSSAI; not allowed in infant foods","moderate"],
+ ["Spices","Dried ground masala spices","Spice","Flavour","",[],"","","","","none"]]},
+hi:{n:"मसाला इंस्टेंट नूडल्स (नमूना)",h:"बहुत नमकीन, तला हुआ और प्रोसेस्ड",s:"एक पैकेट में दिन की सोडियम सीमा का 44% और सैचुरेटेड फैट का 36% है। कभी-कभार ठीक है, रोज़ का खाना नहीं।",f:["अति-प्रोसेस्ड","ज़्यादा सोडियम","पाम ऑयल"],
+ k:["एक पैकेट में 880 मिग्रा सोडियम: रोज़ की सीमा का 44%।","7.2 ग्राम सैचुरेटेड फैट, ज़्यादातर पाम ऑयल से: सीमा का 36%।","फ्लेवर एन्हांसर (INS 621) संवेदनशील लोगों में सिरदर्द कर सकता है।"],a:["गेहूँ (ग्लूटेन)"],q:"कभी-कभार का स्नैक: ज़्यादा से ज़्यादा एक पैकेट, हफ़्ते में एक बार, सब्ज़ियाँ मिलाकर और आधा मसाला डालकर।",b:["WHO: सैचुरेटेड फैट ऊर्जा के 10% से कम","JECFA/EFSA ADI; FSSAI से अनुमत, शिशुओं के लिए नहीं",""],w:["भुने चने या सब्ज़ियों वाला पोहा चुनें।","नूडल्स खाएँ तो आधा मसाला डालें और सब्ज़ियाँ मिलाएँ।"],
+ i:[["रिफाइंड पाम ऑयल","पाम फल से बना सस्ता वनस्पति तेल","रिफाइंड फैट","नूडल्स तलने और लंबे समय तक चलाने के लिए","दिल और रक्त नलिकाएँ",["LDL (बुरा) कोलेस्ट्रॉल बढ़ाता है","सैचुरेटेड फैट का बोझ बढ़ाता है","रोज़ खाने पर वज़न बढ़ सकता है"],"इसका लगभग आधा फैट सैचुरेटेड है, इसलिए एक पैकेट भी दिन की सीमा का बड़ा हिस्सा ले लेता है।","सालों तक नियमित सेवन से दिल की बीमारी का जोखिम बढ़ सकता है।","हाई कोलेस्ट्रॉल, हृदय रोग या डायबिटीज़ वाले लोग","","strong"],
+ ["फ्लेवर एन्हांसर (INS 621)","स्वाद बढ़ाने वाला पदार्थ (मोनोसोडियम ग्लूटामेट)","फ्लेवर एन्हांसर","मसाले का स्वाद तेज़ करता है","नसें और भूख",["संवेदनशील लोगों में सिरदर्द या चेहरा लाल होना","नमकीन चीज़ें ज़्यादा खाने की आदत बनाता है","सोडियम और बढ़ाता है"],"FSSAI और WHO सामान्य मात्रा में इसे सुरक्षित मानते हैं; असर मात्रा पर निर्भर है और ज़्यादातर संवेदनशील लोगों में दिखता है।","नमकीन स्नैक्स की बार-बार तलब।","माइग्रेन या MSG से परेशानी वाले लोग","FSSAI से अनुमत; शिशुओं के भोजन में वर्जित","moderate"],
+ ["मसाले","पिसे हुए सूखे मसाले","मसाला","स्वाद","",[],"","","","","none"]]},
+hinglish:{n:"Masala Instant Noodles (sample)",h:"Bohot namkeen, fried aur processed",s:"Ek packet mein din ki sodium limit ka 44% aur saturated fat ka 36% hai. Kabhi-kabhi theek, roz ka khana nahi.",f:["Ultra-processed","High sodium","Palm oil"],
+ k:["Ek packet mein 880 mg sodium: daily limit ka 44%.","7.2 g saturated fat, zyada tar palm oil se: limit ka 36%.","Flavour enhancer (INS 621) sensitive logon mein sar-dard kar sakta hai."],a:["Wheat (gluten)"],q:"Kabhi-kabhi ka snack: zyada se zyada ek packet, hafte mein ek baar, sabziyan milakar aur aadha masala daalkar.",b:["WHO: saturated fat energy ke 10% se kam","JECFA/EFSA ADI; FSSAI permitted, infants ke liye nahi",""],w:["Roasted chana ya sabzi wala poha chunein.","Noodles khayein to aadha masala daalein aur sabziyan milayein."],
+ i:[["Refined palm oil","Palm fruit se bana sasta vegetable oil","Refined fat","Noodles fry karne aur shelf life ke liye","Heart aur blood vessels",["LDL (bura) cholesterol badhata hai","Saturated fat ka load badhata hai","Roz khane par weight badh sakta hai"],"Iska lagbhag aadha fat saturated hai, isliye ek packet bhi din ki limit ka bada hissa le leta hai.","Saalon tak regular lene par heart disease ka risk badh sakta hai.","High cholesterol, heart disease ya diabetes wale log","","strong"],
+ ["Flavour enhancer (INS 621)","Swaad badhane wala padarth (monosodium glutamate)","Flavour enhancer","Masale ka swaad tez karta hai","Nerves aur bhookh",["Sensitive logon mein sar-dard ya chehra laal hona","Namkeen cheezein zyada khane ki aadat banata hai","Sodium aur badhata hai"],"FSSAI aur WHO normal matra mein ise safe maante hain; asar matra par nirbhar hai aur zyada tar sensitive logon mein dikhta hai.","Namkeen snacks ki baar-baar talab.","Migraine ya MSG se pareshani wale log","FSSAI se permitted; infant food mein allowed nahi","moderate"],
+ ["Spices","Pise hue sukhe masale","Spice","Swaad","",[],"","","","","none"]]}};
+function sample(){isSample=true;img=null;$('home').hidden=true;const s=SL[lang],lv=['avoid','watch','ok'];
+ render({isLabel:true,productName:s.n,verdict:{level:'watch',headline:s.h,summary:s.s},nova:4,frequency:s.q,readQuality:{level:'high',note:''},flags:s.f,keyPoints:s.k.map((x,i)=>({level:['avoid','avoid','watch'][i],text:x})),nutrition:SN,
+ ingredients:s.i.map((x,i)=>({name:x[0],plainName:x[1],category:x[2],ins:null,percent:null,role:x[3],affects:x[4],sideEffects:x[5],atNormalDose:x[6],regularUse:x[7],avoidIf:x[8],regulatory:x[9],basis:s.b[i],evidence:x[10],level:lv[i]})),swaps:s.w,allergens:s.a});}
+$('bSample').onclick=sample;
+$('out').oninput=ev=>{if(ev.target.id==='q'){qry=ev.target.value.trim().toLowerCase();ings();}};
+chrome();
+</script>
+</body>
+</html>
