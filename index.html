@@ -1,339 +1,858 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Label Platform – what's really inside?</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>LabScan · Ingredient analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+if (window.tailwind) {
+  tailwind.config = { theme: { extend: {
+    colors: {
+      bg:'rgb(var(--bg) / <alpha-value>)', ink:'rgb(var(--ink) / <alpha-value>)', mute:'rgb(var(--mute) / <alpha-value>)',
+      line:'rgb(var(--line) / <alpha-value>)', accent:'rgb(var(--accent) / <alpha-value>)',
+      ok:'rgb(var(--ok) / <alpha-value>)', warn:'rgb(var(--warn) / <alpha-value>)', risk:'rgb(var(--risk) / <alpha-value>)'
+    },
+    fontFamily: {
+      sans:['Geist','Inter','system-ui','-apple-system','Segoe UI','sans-serif'],
+      mono:['"Geist Mono"','ui-monospace','SFMono-Regular','Menlo','monospace']
+    }
+  } } };
+}
+</script>
 <style>
-:root{--bg:#f4f7fb;--card:#fff;--ink:#17212f;--mute:#5d6b7e;--line:#dfe6ef;--brand:#1f5eff;--brand-soft:#e8efff;
---ok:#16803c;--ok-bg:#e5f6ea;--watch:#a65f00;--watch-bg:#fff2d9;--avoid:#c0262d;--avoid-bg:#fde8e8}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Figtree,"Noto Sans Devanagari",system-ui,sans-serif}
-main{max-width:820px;margin:0 auto;padding:16px 16px 56px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-h1{font-size:22px;margin:0;font-weight:800}
-.sub{color:var(--mute);margin:4px 0 12px}
-.seg{display:inline-flex;background:#e6ecf5;border-radius:12px;padding:3px;gap:2px}
-.seg button{border:0;background:none;padding:8px 14px;border-radius:9px;font:inherit;font-weight:600;color:var(--mute);cursor:pointer;min-height:40px}
-.seg button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px #0002}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
-.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.btn{border:0;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700;cursor:pointer;min-height:48px}
-.btn.p{background:var(--brand);color:#fff}.btn.s{background:var(--brand-soft);color:var(--brand)}.btn.g{background:#eef2f7;color:var(--ink)}
-:focus-visible{outline:3px solid #7aa2ff;outline-offset:2px}
-.hint{color:var(--mute);font-size:14px;flex:1;min-width:200px}
-#cam{position:fixed;inset:0;background:#000;z-index:9;display:none;flex-direction:column}
-#cam video{flex:1;min-height:0;width:100%;object-fit:cover}#cam .bar{display:flex;gap:10px;justify-content:center;padding:14px}
-.verdict{border-radius:16px;padding:18px;border:1px solid}
-.verdict.ok{background:var(--ok-bg);border-color:#a8dcb8}.verdict.watch{background:var(--watch-bg);border-color:#f0cf8e}.verdict.avoid{background:var(--avoid-bg);border-color:#f0b4b6}
-.verdict h2{margin:2px 0 6px;font-size:22px;line-height:1.25}.verdict p{margin:0}
-.pname{font-size:13px;color:var(--mute);font-weight:600}
-.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.tag{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:#fff9;border:1px solid #0002}
-h3{font-size:17px;margin:24px 0 8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.kp{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.kp li{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:12px;background:#fff;border:1px solid var(--line)}
-.kp i{flex:none;width:12px;height:12px;border-radius:50%;margin-top:7px;background:var(--c)}
-.step{display:inline-flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px;font-size:14px;font-weight:600}
-.step button{width:36px;height:36px;border:0;border-radius:9px;background:var(--brand-soft);color:var(--brand);font:inherit;font-size:20px;font-weight:700;cursor:pointer}
-.step span{min-width:64px;text-align:center}
-.meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.meter{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
-.meter .big{font-size:26px;font-weight:800;line-height:1.1}.meter .big small{font-size:14px;font-weight:600;color:var(--mute)}
-.meter .lbl{font-weight:700;display:flex;justify-content:space-between;gap:8px}
-.dots{display:flex;gap:3px;flex-wrap:wrap;margin:8px 0;min-height:14px}.dots i{width:14px;height:14px;border-radius:50%;background:var(--c);display:block}
-.track{position:relative;height:10px;border-radius:9px;background:#e8edf4}
-.track b{display:block;height:100%;border-radius:9px;background:var(--c);max-width:100%}
-.track u{position:absolute;right:0;top:-4px;bottom:-4px;border-right:2px solid var(--ink)}
-.small{font-size:13px;color:var(--mute);margin-top:6px}
-.mix{display:flex;height:10px;border-radius:9px;overflow:hidden;margin:4px 0 10px;background:#e8edf4}.mix b{display:block}
-.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.chip{padding:7px 13px;border-radius:99px;border:1px solid var(--line);background:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
-.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
-.chip.lnk{border:0;background:none;color:var(--brand);margin-left:auto}
-.ing{background:#fff;border:1px solid var(--line);border-left:6px solid var(--c);border-radius:14px;margin-top:8px}
-.ing.ok{--c:#7cc795}.ing.watch{--c:#e8a62d}.ing.avoid{--c:var(--avoid)}
-.ih{all:unset;box-sizing:border-box;display:grid;grid-template-columns:auto 1fr auto auto;gap:2px 10px;align-items:center;width:100%;padding:11px 14px;cursor:pointer}
-.ih:focus-visible{outline:3px solid #7aa2ff;border-radius:12px}
-.rank{color:var(--mute);font-weight:700;min-width:20px}
-.iname{font-weight:700;font-size:16.5px}
-.cat{grid-column:2/3;font-size:13.5px;color:var(--mute)}
-.chev{transition:transform .15s;color:var(--mute);grid-row:1/3;grid-column:4}.ing.open .chev{transform:rotate(180deg)}
-.pill{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:99px;grid-row:1/3;grid-column:3}
-.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.watch{background:var(--watch-bg);color:var(--watch)}.pill.avoid{background:var(--avoid-bg);color:var(--avoid)}
-.ins{font-size:12px;background:#eef2f7;border-radius:6px;padding:1px 7px;font-weight:700;color:var(--mute);margin-left:4px}
-.body{display:none;padding:0 14px 13px 44px}.ing.open .body{display:block}
-.rows{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:14.5px}
-.rows dt{color:var(--mute);font-weight:700;white-space:nowrap}.rows dd{margin:0}
-.ibar{height:6px;border-radius:6px;background:#e8edf4;margin:0 0 8px}.ibar b{display:block;height:100%;border-radius:6px;background:#8aa2c8}
-.gl{display:grid;gap:8px}.gc{all:unset;box-sizing:border-box;cursor:pointer;display:block;background:#fff;border:1px solid var(--line);border-left:6px solid var(--c);border-radius:14px;padding:10px 14px}
-.gc.watch{--c:#e8a62d}.gc.avoid{--c:var(--avoid)}.gc:focus-visible{outline:3px solid #7aa2ff}
-.gc .pill{margin-left:8px}.gc .gs{display:block;color:var(--ink);font-size:14.5px;margin-top:3px}
-ul.l{margin:0;padding-left:20px}
-.foot{font-size:12.5px;color:var(--mute);margin-top:24px}
-.err{background:var(--avoid-bg);color:var(--avoid);padding:12px 14px;border-radius:12px;font-weight:600;margin-top:14px}
-.spin{display:flex;gap:12px;align-items:center;padding:26px;justify-content:center;color:var(--mute);font-weight:600}
-.spin i{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:r 1s linear infinite}
-@keyframes r{to{transform:rotate(360deg)}}
-@media(max-width:560px){.rows{grid-template-columns:1fr}.rows dt{margin-top:4px}.body{padding-left:14px}}
-@media(prefers-reduced-motion:reduce){.spin i{animation-duration:3s}}
+:root,[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:6 8 13; --ink:232 236 245; --mute:136 146 168; --line:255 255 255;
+  --accent:125 211 252; --ok:52 211 153; --warn:245 181 68; --risk:248 113 113;
+  --glass:255 255 255; --glass-a:.045; --glass-b:.10; --glow:.38;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+[data-theme="light"]{
+  color-scheme:light;
+  --bg:244 246 250; --ink:12 18 32; --mute:93 104 128; --line:12 18 32;
+  --accent:3 105 161; --ok:5 150 105; --warn:180 110 0; --risk:200 40 40;
+  --glass:255 255 255; --glass-a:.72; --glass-b:.09; --glow:.22;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:84px;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:rgb(var(--bg));color:rgb(var(--ink));font-family:Geist,Inter,system-ui,sans-serif;font-feature-settings:"ss01","cv11";letter-spacing:-.005em;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgb(var(--line)/.045) 1px,transparent 1px),linear-gradient(90deg,rgb(var(--line)/.045) 1px,transparent 1px);
+  background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 80%);mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 80%)}
+body::after{content:"";position:fixed;left:50%;top:-220px;width:900px;height:520px;transform:translateX(-50%);pointer-events:none;z-index:0;
+  background:radial-gradient(closest-side,rgb(var(--accent)/.16),transparent);filter:blur(20px)}
+#app{position:relative;z-index:1}
+body.lock{overflow:hidden}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid rgb(var(--accent));outline-offset:3px;border-radius:8px}
 
-.top{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:#ffffffe8;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:8px;font-weight:800}
-.logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#1f5eff,#12b5a0);color:#fff;display:grid;place-items:center;font-size:15px}
-main h1{font-size:30px;line-height:1.15;letter-spacing:-.02em;margin:18px 0 6px}
-.panel{box-shadow:0 1px 2px #1f2f4a0f,0 6px 20px #1f2f4a0a}
-.btn{border-radius:14px}.btn.p{box-shadow:0 4px 12px #1f5eff44}
-.thumb{float:right;width:76px;height:76px;object-fit:cover;border-radius:14px;margin:0 0 6px 12px;border:2px solid #fff}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
-.tile{border:2px solid var(--line);background:#fff;border-radius:14px;padding:10px 12px;font:inherit;cursor:pointer;text-align:left;display:flex;align-items:baseline;gap:8px}
-.tile b{font-size:26px;line-height:1;color:var(--c)}.tile span{font-weight:700;color:var(--mute)}
-.tile.ok{--c:var(--ok)}.tile.watch{--c:#c27a00}.tile.avoid{--c:var(--avoid)}
-.tile[aria-pressed=true]{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
-.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
-.tools input{flex:1;min-width:160px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;background:#fff}
-.pn{font-weight:600;color:var(--ink)}.cat{line-height:1.35}
-.mini{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 11px 44px}.mini span{font-size:12.5px;background:#f1f4f9;border-radius:99px;padding:2px 9px;color:#33425a}
-.ing.open .mini{display:none}.end{margin-top:22px}
-@media(max-width:560px){.mini{padding-left:14px}main h1{font-size:25px}.tile b{font-size:22px}}
+.glass{background:rgb(var(--glass)/var(--glass-a));border:1px solid rgb(var(--line)/var(--glass-b));border-radius:18px;
+  -webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:inset 0 1px 0 rgb(255 255 255/.06),0 18px 40px -24px rgb(0 0 0/.55)}
+.lbl{font-family:"Geist Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgb(var(--mute))}
+.mono{font-family:"Geist Mono",ui-monospace,monospace}
+.badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:7px;font-family:"Geist Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.04em;
+  border:1px solid rgb(var(--line)/.14);color:rgb(var(--ink)/.78);background:rgb(var(--line)/.04);white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:50%;background:rgb(var(--mute));flex:none}
+.dot.ok{background:rgb(var(--ok));box-shadow:0 0 8px rgb(var(--ok)/.7)}.dot.warn{background:rgb(var(--warn));box-shadow:0 0 8px rgb(var(--warn)/.6)}.dot.risk{background:rgb(var(--risk));box-shadow:0 0 8px rgb(var(--risk)/.55)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 18px;border-radius:12px;border:1px solid rgb(var(--line)/.16);background:rgb(var(--line)/.05);
+  font-weight:500;font-size:14px;letter-spacing:-.005em;transition:transform .25s var(--ease),background .25s,border-color .25s,box-shadow .35s}
+.btn:hover{background:rgb(var(--line)/.09);border-color:rgb(var(--line)/.28)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:rgb(var(--accent));color:rgb(var(--bg));border-color:transparent;font-weight:600;box-shadow:0 0 0 0 rgb(var(--accent)/.0)}
+.btn.primary:hover{box-shadow:0 0 30px rgb(var(--accent)/var(--glow));background:rgb(var(--accent))}
+.btn.sm{height:36px;padding:0 12px;font-size:13px;border-radius:10px}
+.seg{display:inline-flex;padding:3px;border-radius:11px;background:rgb(var(--line)/.06);border:1px solid rgb(var(--line)/.1);gap:2px;max-width:100%;overflow-x:auto}
+.seg button{height:30px;padding:0 12px;border-radius:8px;border:0;background:transparent;font-size:12.5px;color:rgb(var(--mute));white-space:nowrap;transition:background .3s var(--ease),color .3s}
+.seg button[aria-pressed="true"]{background:rgb(var(--ink)/.92);color:rgb(var(--bg));font-weight:600}
+@media (hover:hover){.seg button:hover:not([aria-pressed="true"]){color:rgb(var(--ink))}}
 
-.hero{background:linear-gradient(135deg,#eaf1ff,#e4f7f2);border-color:#cfe0fb}
-.hero .btn.p{min-height:56px;font-size:17px;padding:14px 26px}
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.stp{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:4px}
-.stp i{font-style:normal;width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800}
-.stp span{color:var(--mute);font-size:14.5px}
-.tags.big .tag{font-size:14px;padding:6px 14px;background:#fff}
-#home[hidden]{display:none}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rise{animation:rise .7s var(--ease) both;animation-delay:var(--d,0ms)}
+@keyframes sweep{0%{top:0;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:calc(100% - 2px);opacity:0}}
+.scanframe{position:relative;border-radius:18px;overflow:hidden}
+.scanframe i{position:absolute;width:22px;height:22px;border:2px solid rgb(var(--accent));opacity:.9}
+.scanframe i:nth-child(1){top:10px;left:10px;border-right:0;border-bottom:0;border-top-left-radius:8px}
+.scanframe i:nth-child(2){top:10px;right:10px;border-left:0;border-bottom:0;border-top-right-radius:8px}
+.scanframe i:nth-child(3){bottom:10px;left:10px;border-right:0;border-top:0;border-bottom-left-radius:8px}
+.scanframe i:nth-child(4){bottom:10px;right:10px;border-left:0;border-top:0;border-bottom-right-radius:8px}
+.scanframe .beam{position:absolute;left:10px;right:10px;height:2px;background:linear-gradient(90deg,transparent,rgb(var(--accent)),transparent);box-shadow:0 0 18px rgb(var(--accent));animation:sweep 3.2s var(--ease) infinite}
+.cursor{display:inline-block;width:7px;height:13px;background:rgb(var(--accent));vertical-align:-2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
 
+/* compound stack */
+#layers{margin-right:34px}
+.layer{position:relative;display:flex;align-items:center;gap:10px;width:100%;padding:0 12px;border-radius:11px;text-align:left;overflow:hidden;
+  border:1px solid rgb(var(--hue)/.36);background:linear-gradient(90deg,rgb(var(--hue)/.24),rgb(var(--hue)/.07));margin-bottom:3px;
+  transition:height .7s var(--ease),opacity .5s var(--ease),transform .7s var(--ease),filter .5s,box-shadow .5s var(--ease),margin .7s var(--ease),border-color .4s}
+.layer.est::after{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(135deg,transparent 0 5px,rgb(var(--line)/.06) 5px 8px);pointer-events:none}
+.layer:hover{border-color:rgb(var(--hue)/.7)}
+.layer.dim{opacity:.34;filter:saturate(.4)}
+.layer.lit{opacity:1;border-color:rgb(var(--hue)/1);transform:translateX(5px);box-shadow:0 0 0 1px rgb(var(--hue)/.55),0 0 30px rgb(var(--hue)/.28)}
+.layer.match{border-color:rgb(var(--accent));box-shadow:0 0 0 1px rgb(var(--accent)/.6),0 0 24px rgb(var(--accent)/.25)}
+.layer.peeled{height:0!important;opacity:0;margin-bottom:0;border-width:0;transform:translateY(-18px) scale(.96);pointer-events:none}
+#links path{fill:none;stroke:rgb(var(--accent));stroke-width:1.5;stroke-dasharray:4 5;animation:dash 1.2s linear infinite;filter:drop-shadow(0 0 5px rgb(var(--accent)/.8))}
+#links circle{fill:rgb(var(--accent));filter:drop-shadow(0 0 5px rgb(var(--accent)))}
+@keyframes dash{to{stroke-dashoffset:-18}}
 
-.warn{background:var(--watch-bg);color:#6b4100;border:1px solid #f0cf8e;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-weight:600}
-.freq{margin-top:10px;background:var(--brand-soft);border-radius:14px;padding:12px 14px}.freq b{display:block;color:var(--brand);font-size:13.5px}
-.tag.nv.n4{background:var(--avoid-bg);color:var(--avoid)}.tag.nv.n3{background:var(--watch-bg);color:var(--watch)}.tag.nv.n1,.tag.nv.n2{background:var(--ok-bg);color:var(--ok)}
-.nf{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:4px 14px}.nf summary{cursor:pointer;font-weight:700;padding:10px 0}
-.nf table{width:100%;border-collapse:collapse;margin-bottom:8px}.nf td{padding:7px 0;border-top:1px solid var(--line);font-size:14.5px}.nf td:last-child{text-align:right;color:var(--mute);font-size:13px}
-button.stp{font:inherit;color:inherit;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}button.stp:hover{border-color:var(--brand);transform:translateY(-2px)}
-.dots i{animation:pop .35s both}@keyframes pop{from{transform:scale(0);opacity:0}}.track b{transition:width .3s}
-.ck{display:flex;gap:10px;align-items:flex-start;padding:8px 2px;cursor:pointer}.ck input{width:22px;height:22px;accent-color:var(--brand);flex:none;margin:1px 0 0}
-.drag .hero{outline:3px dashed var(--brand);outline-offset:4px}
-@media(prefers-reduced-motion:reduce){.dots i{animation:none}button.stp:hover{transform:none}.track b{transition:none}}
+/* sliders */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:3px;background:linear-gradient(90deg,rgb(var(--accent)) var(--p,50%),rgb(var(--line)/.16) var(--p,50%))}
+input[type=range]::-moz-range-track{height:3px;border-radius:3px;background:rgb(var(--line)/.16)}
+input[type=range]::-moz-range-progress{height:3px;border-radius:3px;background:rgb(var(--accent))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6.5px;border-radius:50%;background:rgb(var(--ink));border:0;box-shadow:0 0 0 4px rgb(var(--accent)/.25),0 2px 8px rgb(0 0 0/.4);transition:box-shadow .25s var(--ease),transform .25s var(--ease)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:rgb(var(--ink));border:0;box-shadow:0 0 0 4px rgb(var(--accent)/.25)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15);box-shadow:0 0 0 7px rgb(var(--accent)/.28),0 2px 10px rgb(0 0 0/.4)}
+
+/* body systems */
+.sys{display:grid;grid-template-columns:minmax(110px,1.2fr) 2fr 28px;align-items:center;gap:14px;width:100%;padding:12px 10px;border-radius:12px;text-align:left;border:1px solid transparent;transition:background .35s var(--ease),border-color .35s}
+.sys:hover{background:rgb(var(--line)/.04)}
+.sys[aria-pressed="true"]{background:rgb(var(--accent)/.08);border-color:rgb(var(--accent)/.45)}
+.sys .track{position:relative;height:5px;border-radius:5px;background:rgb(var(--line)/.1);overflow:visible}
+.sys .track i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,rgb(var(--accent)/.55),rgb(var(--accent)));transition:width .9s var(--ease)}
+.sys .track i.live{animation:glow var(--pd,3s) ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 rgb(var(--accent)/0)}50%{box-shadow:0 0 14px 1px rgb(var(--accent)/.6)}}
+.sys.none .track i{width:0!important}.sys.none{opacity:.55}
+
+/* dossier */
+.dossier{padding:18px;transition:opacity .55s var(--ease),transform .55s var(--ease),filter .55s,border-color .4s,box-shadow .5s var(--ease)}
+.dossier.dim{opacity:.26;transform:scale(.985);filter:saturate(.5)}
+.dossier.match{border-color:rgb(var(--accent)/.55);box-shadow:inset 0 1px 0 rgb(255 255 255/.06),0 0 0 1px rgb(var(--accent)/.25),0 0 34px -6px rgb(var(--accent)/.3)}
+.dossier.lit{border-color:rgb(var(--accent)/.5)}
+.kv{display:grid;grid-template-columns:104px 1fr;gap:6px 14px;font-size:13px;line-height:1.5}
+.kv dt{color:rgb(var(--mute));font-family:"Geist Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding-top:3px}
+.kv dd{margin:0;color:rgb(var(--ink)/.9)}
+.evseg{display:inline-flex;gap:3px;margin-right:8px;vertical-align:middle}
+.evseg i{width:16px;height:4px;border-radius:2px;background:rgb(var(--line)/.16)}
+.evseg i.on{background:rgb(var(--accent))}
+.minibar{height:3px;border-radius:3px;background:rgb(var(--line)/.12);overflow:hidden;flex:1}
+.minibar i{display:block;height:100%;background:rgb(var(--accent));border-radius:3px;transition:width .5s var(--ease)}
+.ro{position:relative;padding:14px 14px 12px;border-radius:14px}
+.ro .bar{height:3px;border-radius:3px;background:rgb(var(--line)/.12);margin-top:10px;overflow:hidden}
+.ro .bar i{display:block;height:100%;border-radius:3px;transition:width .8s var(--ease)}
+
+.sheet{position:fixed;inset:0;z-index:80;background:rgb(0 0 0/.62);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px;animation:fade .3s var(--ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet .panel{width:100%;max-width:440px;max-height:94vh;overflow:auto;animation:rise .5s var(--ease)}
+.sheet img{display:block;width:100%;height:auto;border-radius:12px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgb(var(--line)/.18);border-radius:8px}
+@media (max-width:420px){.kv{grid-template-columns:1fr;gap:0 0}.kv dt{padding-top:8px}.sys{grid-template-columns:1fr 28px}.sys .track{grid-column:1/-1;order:3}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}}
 </style>
 </head>
 <body>
-<div class="top"><div class="brand"><span class="logo">L</span>Label Platform</div><div class="seg" role="group" aria-label="Language" id="langs"></div></div>
-<main>
-<h1 id="t-title"></h1>
-<p class="sub" id="t-sub"></p>
-<section class="panel hero"><div class="actions">
-  <button class="btn p" id="bCam"></button><button class="btn s" id="bUp"></button><button class="btn g" id="bSample"></button><span class="hint" id="t-drop"></span>
-  <input type="file" id="file" accept="image/*" hidden></div></section>
-<div id="home"></div>
-<div id="out" aria-live="polite"></div>
-<p class="foot" id="t-foot"></p>
+<div id="app">
+
+<header class="sticky top-0 z-40 border-b border-line/10 bg-bg/70 backdrop-blur-xl" style="padding-top:env(safe-area-inset-top,0px)">
+  <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+    <div class="flex items-center gap-3">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5 20.5 7.5v9L12 21.5 3.5 16.5v-9L12 2.5Z" stroke="rgb(var(--accent))" stroke-width="1.6"/><path d="M12 7.5 16.2 10v4L12 16.5 7.8 14v-4L12 7.5Z" fill="rgb(var(--accent)/.35)" stroke="rgb(var(--accent))" stroke-width="1.2"/></svg>
+      <span class="text-[15px] font-semibold tracking-tight">LabScan</span>
+      <span class="lbl hidden sm:inline" id="status">Ready</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="btn sm" id="shareBtn" type="button" hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+        Share
+      </button>
+      <button class="btn sm" id="themeBtn" type="button" aria-label="Switch theme" style="width:36px;padding:0"><span id="themeIcon"></span></button>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-6xl px-4 pb-24 pt-8">
+
+  <!-- error -->
+  <div id="error" hidden></div>
+
+  <!-- landing -->
+  <section id="landing" class="mx-auto max-w-xl">
+    <p class="lbl rise" style="--d:0ms">Molecular label analysis</p>
+    <h1 class="rise mt-3 text-[40px] font-semibold leading-[1.02] tracking-[-0.035em] sm:text-[52px]" style="--d:60ms">Decode any<br>food label.</h1>
+    <p class="rise mt-4 max-w-md text-[15px] leading-relaxed text-mute" style="--d:120ms">Photograph the ingredient list. LabScan stacks the ingredients, maps their effect on body systems, and shows how amounts scale from one bite to the full pack.</p>
+
+    <div class="rise glass mt-8 p-3" style="--d:180ms">
+      <div class="scanframe h-44 bg-ink/[0.03]">
+        <i></i><i></i><i></i><i></i><span class="beam"></span>
+        <div class="absolute inset-0 grid place-items-center text-center">
+          <div>
+            <p class="lbl">Awaiting specimen</p>
+            <p class="mt-1 text-[13px] text-mute">Back of pack · ingredients + nutrition table</p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 grid gap-2 sm:grid-cols-3">
+        <button class="btn primary" id="camBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          Camera
+        </button>
+        <label class="btn cursor-pointer" id="pickBtn" tabindex="0" role="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          Upload
+          <input type="file" id="file" accept="image/*" multiple hidden>
+        </label>
+        <button class="btn" id="demoBtn" type="button">Sample</button>
+      </div>
+      <input type="file" id="camFile" accept="image/*" capture="environment" hidden>
+    </div>
+
+    <div class="rise mt-6" style="--d:240ms">
+      <p class="lbl mb-2">Profile</p>
+      <div class="seg" id="personas" role="group" aria-label="Analysis profile"></div>
+    </div>
+    <p class="rise mt-6 text-[12.5px] leading-relaxed text-mute" style="--d:300ms">Reads labels from any country and language. Add up to 3 photos at once. Not medical advice.</p>
+    <div id="landingNote" class="glass mt-4 p-3 text-[13px] text-mute" hidden></div>
+  </section>
+
+  <!-- camera -->
+  <section id="camera" hidden class="mx-auto max-w-xl">
+    <div class="glass overflow-hidden p-2">
+      <div class="relative overflow-hidden rounded-xl bg-black">
+        <video id="camVideo" autoplay playsinline muted class="block max-h-[68vh] w-full object-cover"></video>
+        <div class="scanframe pointer-events-none absolute inset-0"><i></i><i></i><i></i><i></i><span class="beam"></span></div>
+      </div>
+    </div>
+    <div class="mt-3 grid grid-cols-2 gap-2">
+      <button class="btn primary" id="snapBtn" type="button">Capture</button>
+      <button class="btn" id="camClose" type="button">Close</button>
+    </div>
+  </section>
+
+  <!-- loading -->
+  <section id="loading" hidden class="mx-auto max-w-xl">
+    <div class="glass p-4" role="status" aria-live="polite">
+      <div class="scanframe h-52 bg-black/30"><i></i><i></i><i></i><i></i><span class="beam"></span><img id="loadImg" alt="Specimen" class="h-full w-full object-cover opacity-70"></div>
+      <div class="mono mt-4 min-h-[112px] text-[12px] leading-6 text-mute" id="term"></div>
+      <button class="btn sm mt-3" id="cancelBtn" type="button">Cancel</button>
+    </div>
+  </section>
+
+  <!-- result -->
+  <div id="result" hidden></div>
+
+  <p class="mt-14 text-center text-[11.5px] leading-relaxed text-mute">Educational analysis generated from a photo. Verify against the pack. Not a substitute for medical advice.<br>Daily references: WHO (sodium, free sugars, saturated fat) and FDA DV (2,000 kcal).</p>
 </main>
-<div id="cam"><video id="vid" playsinline muted></video><div class="bar"><button class="btn p" id="bSnap"></button><button class="btn g" id="bClose"></button></div></div>
+</div>
+
+<!-- share modal -->
+<div class="sheet" id="shareSheet" hidden>
+  <div class="glass panel p-4" role="dialog" aria-modal="true" aria-label="Share summary">
+    <div class="mb-3 flex items-center justify-between"><span class="lbl">Summary card</span><button class="btn sm" id="shareClose" type="button" style="width:36px;padding:0" aria-label="Close">✕</button></div>
+    <img id="shareImg" alt="Shareable summary card">
+    <div class="mt-3 grid grid-cols-2 gap-2">
+      <button class="btn primary" id="shareNative" type="button">Share</button>
+      <a class="btn" id="shareSave" download="labscan-summary.png">Save PNG</a>
+    </div>
+  </div>
+</div>
 
 <script>
-const T={
-en:{title:"What's inside this label?",sub:"Scan any food or drink label. See sugar, salt and fat in teaspoons, and what each ingredient does to your body.",
- drop:"Photograph the ingredients list and nutrition table.",cam:"📷 Open camera",up:"⬆ Upload photo",snap:"Capture",close:"Close",busy:"Reading the label…",
- per:{serving:"Per serving",'100g':"Per 100 g/ml"},sugar:"Sugar",salt:"Salt",satfat:"Saturated fat",tsp:"tsp",of:"of daily limit",
- limit:"Daily limits used: sugar 25 g, sodium 2000 mg (5 g salt), saturated fat 20 g (adult, WHO/ICMR-based).",
- key:"What to know",portion:{serving:"Servings I eat",'100g':"× 100 g I eat"},ings:"Ingredients, in label order",
- ingHint:"The first ingredient is the largest. Tap an ingredient for details.",all:"All",watch:"Watch + Limit",avoid:"Limit",open:"Expand all",shut:"Collapse all",
- role:"Why it's added",aff:"Can affect",reg:"If eaten regularly",who:"Limit if",ev:"Evidence",evl:{strong:"strong",moderate:"moderate",limited:"limited",none:"none"},
- side:"Side effects",dose:"Even at normal amounts",regl:"Regulation",glance:"Harmful ingredients: side effects at a glance",share:"Share summary",nf:"Full nutrition facts",nl:{kcal:"Energy",totalFatG:"Total fat",satFatG:"Saturated fat",transFatG:"Trans fat",sugarG:"Total sugar",addedSugarG:"Added sugar",sodiumMg:"Sodium",fibreG:"Fibre",proteinG:"Protein"},fq:"How often can you eat this?",bs:"Basis",nova:{1:"Unprocessed",2:"Culinary ingredient",3:"Processed",4:"Ultra-processed"},rq:"Parts of the label were hard to read. Check the pack before relying on this.",again:"Scan another",copied:"Copied!",search:"Search ingredients…",lv:{ok:"OK",watch:"Watch",avoid:"Limit"},safe:"No known concern at normal amounts.",swaps:"Better swaps",allergens:"Allergens printed on label",
- notLabel:"Couldn't read a label in this photo. Try a closer, brighter photo.",
- err:{daily_cap:"Today's free scans are used up. Try tomorrow.",hourly_cap:"Too many scans this hour. Try later.",google_limit:"The free AI quota is busy. Wait a minute and retry.",bad_image:"That image could not be used.",no_key:"Server has no API key set.",upstream:"Could not read the label. Please retry.",net:"Network problem. Check your connection.",cam:"Camera not available. Use Upload instead."},
- foot:"Read from a photo by AI, so double-check against the pack. Not medical advice. Photos are not saved."},
-hi:{title:"इस लेबल में असल में क्या है?",sub:"किसी भी खाने-पीने के लेबल को स्कैन करें। चीनी, नमक और फैट चम्मच में देखें, और जानें हर सामग्री शरीर पर क्या असर डालती है।",
- drop:"सामग्री की सूची और न्यूट्रिशन टेबल की फ़ोटो लें।",cam:"📷 कैमरा खोलें",up:"⬆ फ़ोटो अपलोड करें",snap:"फ़ोटो लें",close:"बंद करें",busy:"लेबल पढ़ रहे हैं…",
- per:{serving:"प्रति सर्विंग",'100g':"प्रति 100 ग्राम/मिली"},sugar:"चीनी",salt:"नमक",satfat:"सैचुरेटेड फैट",tsp:"चम्मच",of:"रोज़ की सीमा का",
- limit:"इस्तेमाल की गई रोज़ की सीमा: चीनी 25 ग्राम, सोडियम 2000 मिग्रा (5 ग्राम नमक), सैचुरेटेड फैट 20 ग्राम (वयस्क, WHO/ICMR आधारित)।",
- key:"ज़रूरी बातें",portion:{serving:"मैं कितनी सर्विंग खाता हूँ",'100g':"× 100 ग्राम जितना खाता हूँ"},ings:"सामग्री, लेबल के क्रम में",
- ingHint:"पहली सामग्री सबसे ज़्यादा होती है। विवरण के लिए किसी सामग्री को छुएँ।",all:"सभी",watch:"ध्यान दें + कम करें",avoid:"कम करें",open:"सब खोलें",shut:"सब बंद करें",
- role:"क्यों डालते हैं",aff:"किस पर असर",reg:"रोज़ खाने पर",who:"इन्हें कम करना चाहिए",ev:"प्रमाण",evl:{strong:"मज़बूत",moderate:"मध्यम",limited:"सीमित",none:"नहीं"},
- side:"साइड इफ़ेक्ट",dose:"सामान्य मात्रा में भी",regl:"नियम",glance:"हानिकारक सामग्री: साइड इफ़ेक्ट एक नज़र में",share:"सारांश शेयर करें",nf:"पूरे पोषण मान",nl:{kcal:"ऊर्जा",totalFatG:"कुल फैट",satFatG:"सैचुरेटेड फैट",transFatG:"ट्रांस फैट",sugarG:"कुल चीनी",addedSugarG:"अतिरिक्त चीनी",sodiumMg:"सोडियम",fibreG:"फाइबर",proteinG:"प्रोटीन"},fq:"इसे कितनी बार खा सकते हैं?",bs:"आधार",nova:{1:"बिना प्रोसेस",2:"पाक सामग्री",3:"प्रोसेस्ड",4:"अति-प्रोसेस्ड"},rq:"लेबल के कुछ हिस्से पढ़ने में मुश्किल थे। भरोसा करने से पहले पैक जाँच लें।",again:"दूसरा स्कैन करें",copied:"कॉपी हो गया!",search:"सामग्री खोजें…",lv:{ok:"ठीक",watch:"ध्यान दें",avoid:"कम करें"},safe:"सामान्य मात्रा में कोई ज्ञात चिंता नहीं।",swaps:"बेहतर विकल्प",allergens:"लेबल पर छपी एलर्जी",
- notLabel:"इस फ़ोटो में लेबल नहीं पढ़ा जा सका। पास से, ज़्यादा रोशनी में फ़ोटो लें।",
- err:{daily_cap:"आज के मुफ़्त स्कैन ख़त्म हो गए। कल फिर कोशिश करें।",hourly_cap:"इस घंटे बहुत स्कैन हो गए। बाद में कोशिश करें।",google_limit:"मुफ़्त AI कोटा व्यस्त है। एक मिनट बाद दोबारा करें।",bad_image:"यह फ़ोटो इस्तेमाल नहीं हो सकी।",no_key:"सर्वर में API key सेट नहीं है।",upstream:"लेबल नहीं पढ़ पाए। दोबारा कोशिश करें।",net:"नेटवर्क की समस्या। कनेक्शन जाँचें।",cam:"कैमरा उपलब्ध नहीं। अपलोड इस्तेमाल करें।"},
- foot:"AI ने फ़ोटो से पढ़ा है, इसलिए पैक से मिलान कर लें। यह चिकित्सा सलाह नहीं है। फ़ोटो सेव नहीं होती।"},
-hinglish:{title:"Is label mein asal mein kya hai?",sub:"Kisi bhi food ya drink label ko scan karein. Sugar, namak aur fat teaspoon mein dekhein, aur jaanein har ingredient body par kya asar daalta hai.",
- drop:"Ingredients list aur nutrition table ki photo lein.",cam:"📷 Camera kholein",up:"⬆ Photo upload karein",snap:"Photo lein",close:"Band karein",busy:"Label padh rahe hain…",
- per:{serving:"Per serving",'100g':"Per 100 g/ml"},sugar:"Sugar",salt:"Namak",satfat:"Saturated fat",tsp:"tsp",of:"daily limit ka",
- limit:"Daily limits: sugar 25 g, sodium 2000 mg (5 g namak), saturated fat 20 g (adult, WHO/ICMR based).",
- key:"Zaroori baatein",portion:{serving:"Main kitni servings khata hoon",'100g':"× 100 g jitna khata hoon"},ings:"Ingredients, label ke order mein",
- ingHint:"Pehla ingredient sabse zyada hota hai. Detail ke liye ingredient par tap karein.",all:"Sab",watch:"Dhyan + Kam karein",avoid:"Kam karein",open:"Sab kholein",shut:"Sab band karein",
- role:"Kyun daalte hain",aff:"Kispe asar",reg:"Roz khane par",who:"Inhe kam karna chahiye",ev:"Evidence",evl:{strong:"strong",moderate:"medium",limited:"limited",none:"nahi"},
- side:"Side effects",dose:"Normal matra mein bhi",regl:"Niyam",glance:"Harmful ingredients: side effects ek nazar mein",share:"Summary share karein",nf:"Poore nutrition facts",nl:{kcal:"Energy",totalFatG:"Total fat",satFatG:"Saturated fat",transFatG:"Trans fat",sugarG:"Total sugar",addedSugarG:"Added sugar",sodiumMg:"Sodium",fibreG:"Fibre",proteinG:"Protein"},fq:"Ise kitni baar kha sakte hain?",bs:"Aadhar",nova:{1:"Unprocessed",2:"Cooking ingredient",3:"Processed",4:"Ultra-processed"},rq:"Label ke kuch hisse padhne mein mushkil the. Bharosa karne se pehle pack check kar lein.",again:"Dusra scan karein",copied:"Copy ho gaya!",search:"Ingredient dhoondhein…",lv:{ok:"Theek",watch:"Dhyan dein",avoid:"Kam karein"},safe:"Normal matra mein koi known concern nahi.",swaps:"Behtar options",allergens:"Label par chhapi allergens",
- notLabel:"Is photo mein label padh nahi paaye. Paas se, zyada light mein photo lein.",
- err:{daily_cap:"Aaj ke free scans khatam. Kal try karein.",hourly_cap:"Is ghante bohot scans ho gaye. Baad mein try karein.",google_limit:"Free AI quota busy hai. Ek minute baad retry karein.",bad_image:"Ye image use nahi ho saki.",no_key:"Server mein API key nahi hai.",upstream:"Label nahi padh paaye. Dobara try karein.",net:"Network problem. Connection check karein.",cam:"Camera available nahi. Upload use karein."},
- foot:"AI ne photo se padha hai, isliye pack se match kar lein. Medical advice nahi hai. Photos save nahi hoti."}
+(function(){
+"use strict";
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = v => { if (v === null || v === undefined || v === "") return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
+const fmt = n => { if (n == null || !Number.isFinite(n)) return "–"; const a = Math.abs(n); return a >= 100 ? String(Math.round(n)) : a >= 10 ? String(Math.round(n*10)/10) : String(Math.round(n*100)/100); };
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const lerp = (a,b,t) => a + (b-a)*t;
+const reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+const norm = s => String(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+
+/* ================= constants ================= */
+const PERSONAS = {general:"General", diabetic:"Diabetes", heart:"Heart and BP", kids:"Children", gluten:"Gluten-free", vegan:"Vegan"};
+const SYSTEMS = [
+  {key:"metabolic", label:"Metabolic", sub:"Glucose · lipids · energy"},
+  {key:"renal", label:"Renal", sub:"Kidney · sodium · potassium"},
+  {key:"cardiovascular", label:"Cardiovascular", sub:"Blood pressure · cholesterol"},
+  {key:"musculoskeletal", label:"Musculoskeletal", sub:"Joints · bone · muscle"},
+  {key:"digestive", label:"Digestive", sub:"Gut · fibre · tolerance"}
+];
+const SYS_LABEL = Object.fromEntries(SYSTEMS.map(s => [s.key, s.label]));
+const CATS = ["whole","refined","sugar","salt","fat","additive","flavour","colour","preservative","other"];
+const HUE = {whole:"52 211 153", refined:"251 191 36", sugar:"244 114 182", fat:"251 146 60", salt:"96 165 250", additive:"167 139 250", flavour:"192 132 252", colour:"232 121 249", preservative:"45 212 191", other:"148 163 184"};
+const CAT_NAME = {whole:"Whole food", refined:"Refined carb", sugar:"Sugar", fat:"Fat / oil", salt:"Sodium", additive:"Additive", flavour:"Flavour", colour:"Colourant", preservative:"Preservative", other:"Other"};
+const LVL = {ok:{word:"Nominal", dot:"ok"}, watch:{word:"Monitor", dot:"warn"}, flag:{word:"Elevated", dot:"risk"}};
+const EV = {strong:["Strong",3], moderate:["Moderate",2], limited:["Limited",1], none:["None known",0]};
+const NUT = { /* daily reference values */
+  sugar:{label:"Sugar", unit:"g", limit:50}, sodium:{label:"Sodium", unit:"mg", limit:2000},
+  fat:{label:"Total fat", unit:"g", limit:67}, satFat:{label:"Saturated fat", unit:"g", limit:22},
+  carbs:{label:"Carbohydrate", unit:"g", limit:275}, fibre:{label:"Fibre", unit:"g", limit:28}, protein:{label:"Protein", unit:"g", limit:50}
 };
-const LIM={s:25,n:2000,f:20},COL={ok:'#16803c',watch:'#e08a00',avoid:'#c0262d'};
-const $=id=>document.getElementById(id),e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const num=v=>typeof v==='number'&&isFinite(v),lvl=p=>p>=100?'avoid':p>=50?'watch':'ok';
-let lang=localStorage.lang||'en',img=null,cache={},cur=null,mult=1,filter='all',openSet=new Set(),stream=null,qry='',isSample=false;
-if(!T[lang])lang='en';
 
-function chrome(){
-  const t=T[lang];document.documentElement.lang=lang==='hi'?'hi':'en';
-  $('t-title').textContent=t.title;$('t-sub').textContent=t.sub;$('t-foot').textContent=t.foot;$('t-drop').textContent=t.drop+' '+H[lang].drp;
-  $('bCam').textContent=t.cam;$('bSample').textContent=H[lang].sample;homeUI();$('bUp').textContent=t.up;$('bSnap').textContent=t.snap;$('bClose').textContent=t.close;
-  $('langs').innerHTML=[['en','English'],['hi','हिन्दी'],['hinglish','Hinglish']].map(([k,n])=>`<button data-l="${k}" aria-pressed="${k===lang}">${n}</button>`).join('');
+/* ================= state ================= */
+let persona = "general", data = null, basis = "serv", levelFilter = "all", sysFocus = null;
+let focus = {rank:null, int:null}, peel = 0, io = null, shareUrl = null;
+let previewUrl = null, ctl = null, termTimer = null, camStream = null;
+
+/* ================= sample (clearly fake) ================= */
+const S = (system,direction,weight,effect) => ({system,direction,weight,effect});
+const DEMO = {
+  readable:true, productName:"Masala instant noodles (sample)", unit:"g", language:"English",
+  servingSizeG:35, servingsPerPack:2, packSizeG:70,
+  per100g:{energyKcal:440,proteinG:9,carbsG:61,totalSugarG:3,addedSugarG:2,fatG:17,satFatG:8.5,transFatG:0.1,fibreG:2.5,sodiumMg:1650},
+  summary:"Energy-dense, low-fibre noodle block with a high sodium load and several fast-absorbed carbohydrates.",
+  personaCheck:null,
+  topConcerns:[
+    {title:"High sodium density", detail:"One 35 g serving supplies about 580 mg sodium, 29% of the WHO daily reference (2,000 mg). The whole 70 g pack supplies 58%."},
+    {title:"Stacked fast carbohydrates", detail:"Refined flour, dextrose and maltodextrin are all rapidly absorbed, while fibre is only 2.5 g per 100 g."},
+    {title:"Saturated fat from palm oil", detail:"8.5 g saturated fat per 100 g; a serving supplies about 3 g, 13% of the 22 g daily reference."}
+  ],
+  interactions:[
+    {ingredients:["Refined wheat flour","Dextrose","Maltodextrin"], title:"Stacked fast carbohydrates", effect:"All three are rapidly digested or absorbed and none supplies enough fibre to slow it, so their effects on post-meal glucose compound.", basis:"established"},
+    {ingredients:["Salt","Flavour enhancers"], title:"Flavour drives sodium intake", effect:"Nucleotide enhancers intensify savoury taste, which tends to make a high-sodium food more palatable and easier to eat in larger amounts.", basis:"plausible"},
+    {ingredients:["Palm oil","Refined wheat flour"], title:"Fried refined starch", effect:"A saturated fat combined with low-fibre starch gives a calorie-dense food that is easy to over-consume.", basis:"plausible"}
+  ],
+  swaps:[{name:"Millet or whole-wheat noodles",why:"More fibre and slower glucose rise."},{name:"Vegetable poha or upma",why:"Comparable prep time, far lower sodium."}],
+  ingredients:[
+    {name:"Refined wheat flour",percent:78,category:"refined",ins:null,level:"watch",note:"Wheat with bran and germ removed.",concern:"Low in fibre and digested fast. As a staple in place of whole grains, it is linked to higher type 2 diabetes risk.",who:"People with diabetes or prediabetes",evidence:"moderate",regulatory:null,contributes:"carbs",systems:[S("metabolic","adverse",2,"Rapidly digested starch raises post-meal glucose."),S("digestive","adverse",1,"Low fibre content.")]},
+    {name:"Palm oil",percent:null,category:"fat",ins:null,level:"watch",note:"Frying oil, roughly half saturated fat.",concern:"Saturated fat raises LDL cholesterol when it replaces unsaturated fats. Matters most when eaten often.",who:"People with high cholesterol or heart disease",evidence:"strong",regulatory:null,contributes:"satFat",systems:[S("cardiovascular","adverse",2,"Saturated fat raises LDL cholesterol.")]},
+    {name:"Salt",percent:null,category:"salt",ins:null,level:"watch",note:"Sodium chloride; taste and shelf life.",concern:"Regular high sodium intake raises blood pressure and, over years, stroke and heart disease risk.",who:"People with high BP or kidney disease",evidence:"strong",regulatory:"WHO advises under 5 g salt (2,000 mg sodium) per day.",contributes:"sodium",systems:[S("cardiovascular","adverse",3,"Sodium load raises blood pressure."),S("renal","adverse",2,"Higher sodium increases renal handling load.")]},
+    {name:"Thickeners",percent:null,category:"additive",ins:"508, 412",level:"ok",note:"Potassium chloride and guar gum; hold texture.",concern:null,who:null,evidence:"none",regulatory:null,contributes:null,systems:[S("renal","adverse",1,"Adds potassium; relevant if potassium-restricted."),S("digestive","beneficial",1,"Guar gum is a soluble fibre.")]},
+    {name:"Spice mix",percent:6,category:"whole",ins:null,level:"ok",note:"Onion, coriander, turmeric and similar.",concern:null,who:null,evidence:"none",regulatory:null,contributes:null,systems:[]},
+    {name:"Sugar",percent:null,category:"sugar",ins:null,level:"watch",note:"Added for taste in the seasoning.",concern:"Free sugars add energy without nutrients; high intake is linked to weight gain and dental caries. Amount here is small.",who:"Children, people with diabetes",evidence:"strong",regulatory:"WHO: keep free sugars under 10% of energy.",contributes:"sugar",systems:[S("metabolic","adverse",2,"Free sugar adds glycaemic load and energy.")]},
+    {name:"Acidity regulator",percent:null,category:"additive",ins:"501(i)",level:"ok",note:"Potassium carbonate; texture control.",concern:null,who:null,evidence:"none",regulatory:null,contributes:null,systems:[]},
+    {name:"Flavour enhancers",percent:null,category:"flavour",ins:"627, 631",level:"flag",note:"Disodium guanylate and inosinate; boost savoury taste.",concern:"Metabolised to uric acid, so people with gout are often advised to limit them. They also make salty food more appealing.",who:"People with gout or high uric acid",evidence:"limited",regulatory:"Permitted in India at limits set by FSSAI.",contributes:null,systems:[S("musculoskeletal","adverse",1,"Nucleotides raise uric acid; relevant in gout.")]},
+    {name:"Dextrose",percent:null,category:"sugar",ins:null,level:"watch",note:"Glucose; a sugar under another name.",concern:"Absorbed very fast and raises blood sugar quickly.",who:"People with diabetes",evidence:"moderate",regulatory:null,contributes:"sugar",systems:[S("metabolic","adverse",2,"Fast-absorbed glucose raises blood sugar quickly.")]},
+    {name:"Maltodextrin",percent:null,category:"sugar",ins:null,level:"watch",note:"Starch-derived carbohydrate used as filler.",concern:"High glycaemic index, often higher than table sugar, so it raises blood sugar rapidly.",who:"People with diabetes",evidence:"moderate",regulatory:null,contributes:"carbs",systems:[S("metabolic","adverse",3,"High glycaemic index; rapid glucose rise."),S("digestive","adverse",1,"May alter gut microbiota in animal studies.")]},
+    {name:"Caramel colour",percent:null,category:"colour",ins:"150d",level:"watch",note:"Colour from heated sugars with sulphites and ammonia.",concern:"Can contain traces of 4-MEI, which IARC lists as possibly carcinogenic at high doses. Amounts in food are low.",who:"Very heavy regular consumers",evidence:"limited",regulatory:null,contributes:null,systems:[]},
+    {name:"Antioxidant (TBHQ)",percent:null,category:"preservative",ins:"319",level:"watch",note:"Prevents frying oil from going rancid.",concern:"Safe in the small amounts allowed. Effects seen only at far higher doses in animal studies.",who:null,evidence:"limited",regulatory:"Permitted with a maximum limit in oils and fried foods.",contributes:null,systems:[]}
+  ]
+};
+const DEMO_PERSONA = {
+  general:{status:"watch",message:"Reasonable as an occasional meal; sodium and refined carbohydrate are the main considerations."},
+  diabetic:{status:"watch",message:"Total sugar is low, but refined flour and maltodextrin both raise blood glucose rapidly."},
+  heart:{status:"flag",message:"A single 35 g serving carries about 580 mg sodium, over a quarter of the daily reference."},
+  kids:{status:"watch",message:"Contains flavour enhancers (INS 627, 631) and caramel colour. Best kept occasional for children."},
+  gluten:{status:"flag",message:"Made mainly from wheat flour, so it contains gluten."},
+  vegan:{status:"ok",message:"No animal-derived ingredients are listed in this sample."}
+};
+
+/* ================= theme ================= */
+const SUN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>';
+function setTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  $("#themeIcon").innerHTML = t === "dark" ? SUN : MOON;
+  try{ localStorage.setItem("labscan-theme", t); }catch(e){}
 }
-$('langs').onclick=ev=>{const b=ev.target.closest('[data-l]');if(b){lang=localStorage.lang=b.dataset.l;chrome();if(img)run();else if(isSample)sample();}};
+(function(){ let t = "dark"; try{ t = localStorage.getItem("labscan-theme") || "dark"; }catch(e){} setTheme(t === "light" ? "light" : "dark"); })();
+$("#themeBtn").addEventListener("click", () => setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"));
+const setStatus = t => { $("#status").textContent = t; };
 
-// ---- image in -------------------------------------------------------------
-const toJpg=(src,w,h)=>{const k=Math.min(1,1600/Math.max(w,h)),c=document.createElement('canvas');c.width=w*k;c.height=h*k;c.getContext('2d').drawImage(src,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.85).split(',')[1];};
-$('bUp').onclick=()=>$('file').click();
-const take=f=>{if(!f||!f.type.startsWith('image/'))return;const i=new Image();i.onload=()=>{img=toJpg(i,i.width,i.height);cache={};run();};i.src=URL.createObjectURL(f);};
-$('file').onchange=()=>{take($('file').files[0]);$('file').value='';};
-addEventListener('dragover',v=>{v.preventDefault();document.body.classList.add('drag');});
-addEventListener('dragleave',v=>{if(!v.relatedTarget)document.body.classList.remove('drag');});
-addEventListener('drop',v=>{v.preventDefault();document.body.classList.remove('drag');take(v.dataTransfer.files[0]);});
-addEventListener('paste',v=>take([...v.clipboardData.files][0]));
-$('bCam').onclick=async()=>{try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920}}});
-  $('vid').srcObject=stream;await $('vid').play();$('cam').style.display='flex';}catch{fail('cam');}};
-const stop=()=>{stream&&stream.getTracks().forEach(t=>t.stop());$('cam').style.display='none';};
-$('bClose').onclick=stop;
-$('bSnap').onclick=()=>{const v=$('vid');img=toJpg(v,v.videoWidth,v.videoHeight);stop();cache={};run();};
-
-// ---- scan -----------------------------------------------------------------
-const fail=k=>{$('out').innerHTML=`<div class="err">${e(T[lang].err[k]||T[lang].err.upstream)}</div>`;};
-async function run(){
-  isSample=false;$('home').hidden=true;
-  if(cache[lang])return render(cache[lang]);
-  $('out').innerHTML=`<div class="spin"><i></i>${e(T[lang].busy)}</div>`;const my=img;
+/* ================= server ================= */
+(async function init(){
+  const note = $("#landingNote");
   try{
-    const r=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:img,mime:'image/jpeg',lang})});
-    const d=await r.json();if(my!==img)return;
-    if(!r.ok)return fail(d.error);
-    cache[lang]=d;render(d);
-  }catch{fail('net');}
+    const r = await fetch("/api/health"); const h = await r.json();
+    if(!h.configured){ note.hidden = false; note.textContent = "Scanning is switched off: the server has no GEMINI_API_KEY yet. The sample still works."; $("#pickBtn").hidden = true; $("#camBtn").hidden = true; }
+  }catch(e){ note.hidden = false; note.textContent = "Cannot reach the server. The sample still works."; $("#pickBtn").hidden = true; $("#camBtn").hidden = true; }
+})();
+function compress(file, max){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); resolve(c.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject({code:"image_rejected"}); };
+    img.src = url;
+  });
+}
+async function api(files, signal){
+  const images = await Promise.all(files.slice(0,3).map(f => compress(f, 1600)));
+  let r;
+  try{ r = await fetch("/api/scan", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({images, persona}), signal}); }
+  catch(e){ throw {code: e.name === "AbortError" ? "cancelled" : "network"}; }
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw {code: j.code || "server_error"};
+  return j;
 }
 
-// ---- render ---------------------------------------------------------------
-function meter(label,big,unit,pct,tsp,note){
-  const c=COL[lvl(pct)],n=Math.min(Math.ceil(tsp||0),14);
-  return `<div class="meter" style="--c:${c}"><div class="lbl"><span>${label}</span><span style="color:${c}">${Math.round(pct)}% ${e(T[lang].of)}</span></div>
-  <div class="big">${big} <small>${unit}</small></div>${tsp?`<div class="dots">${'<i></i>'.repeat(n)}</div>`:''}
-  <div class="track"><b style="width:${Math.min(pct,100)}%"></b><u></u></div><div class="small">${note}</div></div>`;
+/* ================= landing / camera / scan ================= */
+function renderPersonas(){
+  const el = $("#personas");
+  el.innerHTML = Object.keys(PERSONAS).map(k => '<button type="button" data-p="'+k+'" aria-pressed="'+(k===persona)+'">'+esc(PERSONAS[k])+'</button>').join("");
+  el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { persona = b.dataset.p; renderPersonas(); }));
 }
-function meters(){
-  const t=T[lang],n=cur.nutrition||{},b=t.per[n.basis]||'',m=[],sg=(num(n.addedSugarG)?n.addedSugarG:n.sugarG)*mult;
-  if(num(sg))m.push(meter(t.sugar,+(sg/4).toFixed(1),t.tsp,sg/LIM.s*100,sg/4,`${+sg.toFixed(1)} g`));
-  if(num(n.sodiumMg)){const mg=n.sodiumMg*mult,g=mg*2.5/1000;m.push(meter(t.salt,+(g/6).toFixed(2),t.tsp,mg/LIM.n*100,g/6,`${Math.round(mg)} mg sodium = ${g.toFixed(1)} g`));}
-  if(num(n.satFatG)){const f=n.satFatG*mult;m.push(meter(t.satfat,+f.toFixed(1),'g',f/LIM.f*100,null,num(n.totalFatG)?`Total fat ${+(n.totalFatG*mult).toFixed(1)} g ≈ ${(n.totalFatG*mult/4.5).toFixed(1)} ${t.tsp}`:''));}
-  $('mt').innerHTML=m.join('');$('mv').textContent=mult+'×';nfUI();
+renderPersonas();
+$("#pickBtn").addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); $("#file").click(); } });
+$("#file").addEventListener("change", e => { const fs = Array.from(e.target.files || []); if(fs.length) scan(fs); e.target.value = ""; });
+$("#camFile").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if(f) scan([f]); e.target.value = ""; });
+$("#demoBtn").addEventListener("click", () => { clearPreview(); const d = JSON.parse(JSON.stringify(DEMO)); d.personaCheck = DEMO_PERSONA[persona]; data = normalize(d); startResult(); });
+$("#cancelBtn").addEventListener("click", () => { if(ctl) ctl.abort(); });
+function stopCam(){ if(camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; } $("#camVideo").srcObject = null; }
+$("#camBtn").addEventListener("click", async () => {
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ $("#camFile").click(); return; }
+  try{ camStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}, width:{ideal:1920}}, audio:false}); $("#camVideo").srcObject = camStream; show("camera"); }
+  catch(e){ stopCam(); $("#camFile").click(); }
+});
+$("#camClose").addEventListener("click", () => { stopCam(); show("landing"); });
+$("#snapBtn").addEventListener("click", () => {
+  const v = $("#camVideo"); if(!v.videoWidth) return;
+  const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext("2d").drawImage(v, 0, 0);
+  c.toBlob(b => { stopCam(); if(b) scan([b]); }, "image/jpeg", 0.92);
+});
+function clearPreview(){ if(previewUrl){ URL.revokeObjectURL(previewUrl); previewUrl = null; } }
+function show(which){
+  ["landing","camera","loading","result"].forEach(id => { $("#"+id).hidden = id !== which; });
+  $("#error").hidden = which !== "error";
+  if(which === "error") $("#landing").hidden = false;
+  $("#shareBtn").hidden = which !== "result";
+  setStatus({landing:"Ready", camera:"Camera", loading:"Analysing", result:"Report", error:"Error"}[which] || "Ready");
+  window.scrollTo({top:0});
 }
-function nfUI(){
-  const t=T[lang],n=cur.nutrition||{},U={kcal:'kcal',sodiumMg:'mg'},P={sugarG:LIM.s,addedSugarG:LIM.s,sodiumMg:LIM.n,satFatG:LIM.f};
-  const rows=['kcal','totalFatG','satFatG','transFatG','sugarG','addedSugarG','sodiumMg','fibreG','proteinG'].filter(k=>num(n[k])).map(k=>{const v=n[k]*mult;
-    return `<tr><td>${e(t.nl[k])}</td><td><b>${+v.toFixed(1)}</b> ${U[k]||'g'}</td><td>${P[k]?Math.round(v/P[k]*100)+'% '+e(t.of):''}</td></tr>`;}).join('');
-  $('nfb').innerHTML=rows;$('nfd').hidden=!rows;
+async function scan(files){
+  clearPreview();
+  previewUrl = URL.createObjectURL(files[0]);
+  $("#loadImg").src = previewUrl;
+  show("loading");
+  const lines = ["acquiring specimen","parsing ingredient list","resolving INS / E-number codes","reading nutrition table","mapping body-system effects","checking ingredient interactions","compiling dossier"];
+  const term = $("#term"); term.innerHTML = ""; let k = 0;
+  const add = () => { if(k >= lines.length) return; term.insertAdjacentHTML("beforeend", '<div><span style="color:rgb(var(--accent))">›</span> '+lines[k]+(k === lines.length-1 ? ' <span class="cursor"></span>' : '')+'</div>'); k++; };
+  add(); termTimer = setInterval(add, 1900);
+  ctl = new AbortController();
+  try{
+    const raw = await api(files, ctl.signal);
+    clearInterval(termTimer);
+    const hasIng = raw && Array.isArray(raw.ingredients) && raw.ingredients.length;
+    const hasNut = raw && raw.per100g && Object.values(raw.per100g).some(v => v !== null && v !== undefined);
+    if(!raw || raw.readable === false || (!hasIng && !hasNut)) return fail("No ingredient list or nutrition table detected. Try a closer, well-lit shot of the back of the pack.");
+    if(!raw.ingredients) raw.ingredients = [];
+    data = normalize(raw);
+    startResult();
+  }catch(e){
+    clearInterval(termTimer);
+    const code = e && e.code;
+    if(code === "cancelled"){ show("landing"); return; }
+    fail({
+      not_configured:"The server has no API key set. Add GEMINI_API_KEY and restart.",
+      network:"Cannot reach the server. Check your connection and retry.",
+      server_error:"The analysis service hit a problem. Retry in a moment.",
+      rate_limited:"Scan limit reached for now. Try again later.",
+      daily_cap:"Today's free scans are used up. Try again tomorrow.",
+      image_rejected:"That file could not be used. Use clear JPG, PNG or WebP photos (up to 3).",
+      invalid_json:"The result could not be structured. Retry the photo."
+    }[code] || "Something went wrong. Please retry.");
+  }finally{ ctl = null; }
 }
-function ings(){
-  const t=T[lang],ig=cur.ingredients||[];
-  $('ings').innerHTML=ig.map((x,i)=>({x,i})).filter(({x})=>(filter==='all'||x.level===filter)&&(!qry||[x.name,x.plainName,x.category,x.ins].join(' ').toLowerCase().includes(qry))).map(({x,i})=>{
-    const se=(x.sideEffects||[]).length?`<ul class="l">${x.sideEffects.map(z=>`<li>${e(z)}</li>`).join('')}</ul>`:'',rows=[[t.role,e(x.role)],[t.aff,e(x.affects)],[t.side,se],[t.dose,e(x.atNormalDose)],[t.reg,e(x.regularUse)],[t.who,e(x.avoidIf)],[t.regl,e(x.regulatory)],[t.bs,e(x.basis)]].filter(r=>r[1]),o=openSet.has(i),bad=x.affects||x.regularUse||se,mini=(x.sideEffects||[]).length?`<div class="mini">${x.sideEffects.slice(0,2).map(z=>`<span>${e(z)}</span>`).join('')}</div>`:'';
-    return `<div class="ing ${e(x.level)}${o?' open':''}" id="ing${i}"><button class="ih" data-i="${i}" aria-expanded="${o}"><span class="rank">${i+1}</span>
-      <span class="iname">${e(x.name)}${x.ins?`<span class="ins">${e(x.ins)}</span>`:''}</span><span class="pill ${e(x.level)}">${e(t.lv[x.level])}</span><span class="chev">▾</span>
-      <span class="cat"><b class="pn">${e(x.plainName)}</b><br>${e([x.category,num(x.percent)?x.percent+'%':''].filter(Boolean).join(' · '))}</span></button>${mini}
-      <div class="body">${num(x.percent)?`<div class="ibar"><b style="width:${Math.min(x.percent,100)}%"></b></div>`:''}
-      <dl class="rows">${rows.map(r=>`<dt>${e(r[0])}</dt><dd>${r[1]}</dd>`).join('')}${bad?`<dt>${e(t.ev)}</dt><dd>${e(t.evl[x.evidence]||'')}</dd>`:`<dt></dt><dd>✓ ${e(t.safe)}</dd>`}</dl></div></div>`;}).join('');
+function fail(msg){
+  show("error");
+  $("#error").innerHTML = '<div class="glass mx-auto mb-6 max-w-xl p-4"><span class="lbl" style="color:rgb(var(--risk))">Scan failed</span><p class="mt-1 text-[14px]">'+esc(msg)+'</p></div>';
 }
-function render(d){
-  const t=T[lang];cur=d;mult=1;filter='all';qry='';openSet=new Set();
-  if(!d.isLabel)return $('out').innerHTML=`<div class="err">${e(t.notLabel)}</div>`;
-  const v=d.verdict,n=d.nutrition||{},ig=d.ingredients||[],cnt=k=>ig.filter(x=>x.level===k).length,harm=ig.map((x,i)=>({x,i})).filter(({x})=>x.level!=='ok'&&(x.sideEffects||[]).length);
-  openSet=new Set(ig.map((x,i)=>x.level==='ok'?-1:i).filter(i=>i>=0));
-  $('out').innerHTML=`<div class="panel">${d.readQuality&&d.readQuality.level!=='high'?`<div class="warn">⚠ ${e(t.rq)}${d.readQuality.note?' '+e(d.readQuality.note):''}</div>`:''}<div class="verdict ${e(v.level)}">${img?`<img class="thumb" alt="" src="data:image/jpeg;base64,${img}">`:''}<div class="pname">${e(d.productName)}</div><h2>${e(v.headline)}</h2><p>${e(v.summary)}</p>
-   <div class="tags">${[1,2,3,4].includes(d.nova)?`<span class="tag nv n${d.nova}">NOVA ${d.nova}: ${e(t.nova[d.nova])}</span>`:''}${(d.flags||[]).map(f=>`<span class="tag">${e(f)}</span>`).join('')}</div></div>
-   ${d.frequency?`<div class="freq"><b>${e(t.fq)}</b> ${e(d.frequency)}</div>`:''}
-   ${(d.keyPoints||[]).length?`<h3>${e(t.key)}</h3><ul class="kp">${d.keyPoints.map(k=>`<li><i style="--c:${COL[k.level]||COL.watch}"></i><span>${e(k.text)}</span></li>`).join('')}</ul>`:''}
-   <h3><span>${e(t.per[n.basis]||'')}${n.servingSize?' · '+e(n.servingSize):''}</span>
-     <span class="step"><button data-s="-.5" aria-label="−">−</button><span id="mv"></span><button data-s=".5" aria-label="+">+</button></span></h3>
-   <div class="small" style="margin:-4px 0 8px">${e((t.portion[n.basis]||t.portion.serving))}</div>
-   <div class="meters" id="mt"></div><details id="nfd" class="nf"><summary>${e(t.nf)}</summary><table><tbody id="nfb"></tbody></table></details><div class="small">${e(t.limit)}</div>
-   ${harm.length?`<h3>${e(t.glance)}</h3><div class="gl">${harm.map(({x,i})=>`<button class="gc ${e(x.level)}" data-g="${i}"><b>${e(x.name)}${x.ins?` (${e(x.ins)})`:''}</b><span class="pill ${e(x.level)}">${e(t.lv[x.level])}</span><span class="gs">${x.sideEffects.slice(0,4).map(e).join(' · ')}</span></button>`).join('')}</div>`:''}
-   <h3>${e(t.ings)}</h3><div class="small" style="margin:-4px 0 8px">${e(t.ingHint)}</div>
-   <div class="tiles" id="flt">${['avoid','watch','ok'].map(k=>`<button class="tile ${k}" data-f="${k}" aria-pressed="false"><b>${cnt(k)}</b><span>${e(t.lv[k])}</span></button>`).join('')}</div>
-   <div class="tools"><input id="q" type="search" placeholder="${e(t.search)}" aria-label="${e(t.search)}"><button class="chip" data-f="all" aria-pressed="true">${e(t.all)} (${ig.length})</button><button class="chip lnk" id="tg">${e(t.open)}</button></div><div id="ings"></div>
-   ${(d.allergens||[]).length?`<h3>${e(t.allergens)}</h3><div class="tags">${d.allergens.map(a=>`<span class="tag" style="background:var(--watch-bg)">${e(a)}</span>`).join('')}</div>`:''}
-   ${(d.swaps||[]).length?`<h3>${e(t.swaps)}</h3><ul class="l">${d.swaps.map(s=>`<li>${e(s)}</li>`).join('')}</ul>`:''}
-   <div class="actions end"><button class="btn p" data-share>${e(t.share)}</button><button class="btn g" data-top>${e(t.again)}</button></div></div>`;
-  meters();ings();
-  $('out').scrollIntoView({behavior:'smooth',block:'start'});
-}
-$('out').onclick=ev=>{
-  if(!cur)return;const t=T[lang];let b;
-  if(b=ev.target.closest('[data-share]')){const v=cur.verdict,txt=`${cur.productName}: ${v.headline}\n${v.summary}\n`+(cur.keyPoints||[]).map(k=>'• '+k.text).join('\n');
-    if(navigator.share)navigator.share({title:cur.productName,text:txt}).catch(()=>{});else navigator.clipboard.writeText(txt).then(()=>{b.textContent=t.copied;});}
-  else if(ev.target.closest('[data-top]'))scrollTo({top:0,behavior:'smooth'});
-  else if(b=ev.target.closest('[data-s]')){mult=Math.min(10,Math.max(.5,mult+ +b.dataset.s));meters();}
-  else if(b=ev.target.closest('[data-f]')){filter=(b.dataset.f===filter&&filter!=='all')?'all':b.dataset.f;$('out').querySelectorAll('[data-f]').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f===filter));ings();}
-  else if(b=ev.target.closest('[data-g]')){const i=+b.dataset.g;filter='all';$('out').querySelectorAll('[data-f]').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f==='all'));openSet.add(i);ings();$('ing'+i).scrollIntoView({behavior:'smooth',block:'center'});}
-  else if(b=ev.target.closest('.ih')){const i=+b.dataset.i;openSet.has(i)?openSet.delete(i):openSet.add(i);ings();}
-  else if(ev.target.closest('#tg')){const all=openSet.size<(cur.ingredients||[]).length;openSet=all?new Set(cur.ingredients.map((_,i)=>i)):new Set();$('tg').textContent=all?t.shut:t.open;ings();}
-};
 
-let di=0,dq=1,rk=new Set();
-const H={
-en:{sample:"Try a sample",how:"How it works (tap a step)",st:[["Snap","Open the camera and photograph the ingredients list and nutrition table"],["Read","See a sample of what the AI reads from a pack"],["Know","Try the teaspoon check below"]],
- dt:"See it in teaspoons",dd:"Tap a food to see what one serving holds. Typical values, so check your own pack.",
- it:[["Cola, 330 ml","s",35],["Mango drink, 200 ml","s",24],["Chocolate bar, 40 g","s",22],["Instant noodles, 1 pack","n",880],["Potato chips, 50 g","n",330]],
- x:"How many?",m:["Well within the day's limit.","A big share of the day's limit.","More than the whole day's limit."],tips:"Ready to scan? Tick as you go",tp:["Good light, no shadow or glare","Hold steady and fill the frame with the text","Ingredients and nutrition table in one clear shot"],go:"Open camera",drp:"You can also drop or paste a photo."},
-hi:{sample:"नमूना देखें",how:"यह कैसे काम करता है (किसी चरण को छुएँ)",st:[["फ़ोटो लें","कैमरा खोलें और सामग्री व न्यूट्रिशन टेबल की फ़ोटो लें"],["पढ़ना","देखें AI पैक से क्या पढ़ता है (नमूना)"],["जानें","नीचे चम्मच वाली जाँच आज़माएँ"]],
- dt:"चम्मच में देखें",dd:"कोई खाना छुएँ और देखें एक सर्विंग में कितना है। ये सामान्य मान हैं, अपना पैक भी जाँचें।",
- it:[["कोला, 330 मिली","s",35],["आम का ड्रिंक, 200 मिली","s",24],["चॉकलेट बार, 40 ग्राम","s",22],["इंस्टेंट नूडल्स, 1 पैकेट","n",880],["आलू चिप्स, 50 ग्राम","n",330]],
- x:"कितने?",m:["दिन की सीमा के भीतर।","दिन की सीमा का बड़ा हिस्सा।","पूरे दिन की सीमा से ज़्यादा।"],tips:"स्कैन के लिए तैयार? टिक करते जाएँ",tp:["अच्छी रोशनी, छाया या चमक नहीं","हाथ स्थिर रखें और अक्षरों से फ्रेम भरें","सामग्री और न्यूट्रिशन टेबल एक साफ़ फ़ोटो में"],go:"कैमरा खोलें",drp:"आप फ़ोटो यहाँ ड्रॉप या पेस्ट भी कर सकते हैं।"},
-hinglish:{sample:"Sample dekhein",how:"Ye kaise kaam karta hai (step par tap karein)",st:[["Photo lein","Camera kholein aur ingredients list aur nutrition table ki photo lein"],["Padhna","Dekhein AI pack se kya padhta hai (sample)"],["Jaanein","Neeche teaspoon check try karein"]],
- dt:"Teaspoon mein dekhein",dd:"Kisi food par tap karein aur dekhein ek serving mein kitna hai. Typical values hain, apna pack bhi check karein.",
- it:[["Cola, 330 ml","s",35],["Mango drink, 200 ml","s",24],["Chocolate bar, 40 g","s",22],["Instant noodles, 1 packet","n",880],["Aloo chips, 50 g","n",330]],
- x:"Kitne?",m:["Din ki limit ke andar.","Din ki limit ka bada hissa.","Poore din ki limit se zyada."],tips:"Scan ke liye ready? Tick karte jaayein",tp:["Achhi light, shadow ya glare nahi","Haath steady rakhein aur text se frame bharein","Ingredients aur nutrition table ek saaf photo mein"],go:"Camera kholein",drp:"Aap photo yahan drop ya paste bhi kar sakte hain."}};
-function demo(){
-  const m=H[lang],t=T[lang],[,k,v]=m.it[di],s=k==='s',x=v*dq,g=s?x:x*2.5/1000,tsp=s?x/4:g/6,pct=x/(s?LIM.s:LIM.n)*100,L=lvl(pct),c=COL[L],n=Math.min(Math.ceil(tsp),20);
-  document.querySelectorAll('#dc [data-d]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.d===di));$('dqv').textContent=dq+'×';
-  $('dr').innerHTML=`<div class="meter" style="--c:${c};margin-top:10px"><div class="lbl"><span>${e(s?t.sugar:t.salt)}</span><span style="color:${c}">${Math.round(pct)}% ${e(t.of)}</span></div>
-  <div class="big">${+tsp.toFixed(1)} <small>${e(t.tsp)}</small></div><div class="dots">${Array.from({length:n},(_,i)=>`<i style="animation-delay:${i*45}ms"></i>`).join('')}${tsp>20?'…':''}</div>
-  <div class="track"><b style="width:${Math.min(pct,100)}%"></b><u></u></div><div class="small">${s?x+' g':x+' mg sodium = '+g.toFixed(1)+' g'} · <b>${e(m.m[['ok','watch','avoid'].indexOf(L)])}</b></div></div>`;
+/* ================= normalise ================= */
+function inferSystems(i){
+  if(i.level === "ok") return [];
+  const o = [];
+  if(i.category === "sugar") o.push({system:"metabolic",direction:"adverse",weight:2,effect:"Adds free sugar and glycaemic load.",inferred:true});
+  else if(i.category === "refined") o.push({system:"metabolic",direction:"adverse",weight:2,effect:"Fast-digesting starch raises post-meal glucose.",inferred:true});
+  else if(i.category === "salt"){ o.push({system:"cardiovascular",direction:"adverse",weight:3,effect:"Sodium load raises blood pressure.",inferred:true}); o.push({system:"renal",direction:"adverse",weight:2,effect:"Increases renal sodium handling load.",inferred:true}); }
+  else if(i.category === "fat") o.push({system:"cardiovascular",direction:"adverse",weight:2,effect:"Fat quality influences blood lipids.",inferred:true});
+  return o;
 }
-function rf(){const m=H[lang],n=rk.size,N=m.tp.length;$('rf').innerHTML=`<div class="track" style="--c:var(--ok);margin:10px 0"><b style="width:${n/N*100}%"></b></div>`+(n===N?`<button class="btn p" data-go>${e(m.go)}</button>`:`<div class="small">${n}/${N}</div>`);}
-function homeUI(){const m=H[lang];$('home').innerHTML=`<h3>${m.how}</h3><div class="steps">${m.st.map((s,i)=>`<button class="stp" data-st="${i}"><i>${i+1}</i><b>${s[0]}</b><span>${s[1]}</span></button>`).join('')}</div>
- <h3>${m.dt}</h3><div class="small" style="margin:-4px 0 8px">${m.dd}</div><div class="panel" id="dm" style="margin-top:0"><div class="chips" id="dc">${m.it.map((x,i)=>`<button class="chip" data-d="${i}">${e(x[0])}</button>`).join('')}</div>
- <div class="actions" style="margin-top:10px"><span class="small">${m.x}</span><span class="step"><button data-q="-1" aria-label="−">−</button><span id="dqv"></span><button data-q="1" aria-label="+">+</button></span></div><div id="dr"></div></div>
- <h3>${m.tips}</h3><div class="panel" id="rd" style="margin-top:0">${m.tp.map((x,i)=>`<label class="ck"><input type="checkbox" data-r="${i}"${rk.has(i)?' checked':''}><span>${x}</span></label>`).join('')}<div id="rf"></div></div>`;demo();rf();}
-$('home').onclick=ev=>{let b;
-  if(b=ev.target.closest('[data-d]')){di=+b.dataset.d;demo();}
-  else if(b=ev.target.closest('[data-q]')){dq=Math.min(4,Math.max(1,dq+ +b.dataset.q));demo();}
-  else if(ev.target.closest('[data-go]'))$('bCam').click();
-  else if(b=ev.target.closest('[data-st]')){[()=>$('bCam').click(),sample,()=>$('dm').scrollIntoView({behavior:'smooth',block:'center'})][+b.dataset.st]();}};
-$('home').onchange=ev=>{const c=ev.target.closest('[data-r]');if(c){c.checked?rk.add(+c.dataset.r):rk.delete(+c.dataset.r);rf();}};
-const SN={kcal:320,fibreG:2.1,proteinG:7,transFatG:0,sugarG:1.2,sodiumMg:880,satFatG:7.2,totalFatG:14,basis:'serving',servingSize:'70 g'};
-const SL={
-en:{n:"Masala Instant Noodles (sample)",h:"Very salty, fried and heavily processed",s:"One pack gives 44% of the day's sodium limit and 36% of saturated fat. Fine as an occasional treat, not a daily meal.",f:["Ultra-processed","High sodium","Contains palm oil"],
- k:["One pack has 880 mg sodium: 44% of the daily limit.","7.2 g saturated fat, mostly from palm oil: 36% of the daily limit.","Flavour enhancer (INS 621) can trigger headaches in sensitive people."],a:["Wheat (gluten)"],q:"Occasional treat: one pack at most, once a week, with vegetables added and half the masala.",b:["WHO: saturated fat under 10% of energy","JECFA/EFSA ADI; FSSAI permitted, not for infants",""],w:["Choose roasted chana or vegetable poha.","If you eat noodles, use half the masala and add vegetables."],
- i:[["Refined palm oil","Cheap vegetable oil from palm fruit","Refined fat","Fries the noodles and keeps them shelf-stable","Heart and blood vessels",["Raises LDL (bad) cholesterol","Adds to saturated fat load","May cause weight gain when eaten daily"],"About half its fat is saturated, so even one pack uses a big share of the day's limit.","Regular intake over years can raise heart-disease risk.","People with high cholesterol, heart disease or diabetes","","strong"],
- ["Flavour enhancer (INS 621)","Savoury taste booster (monosodium glutamate)","Flavour enhancer","Makes the masala taste stronger","Nerves and appetite",["Headache or flushing in sensitive people","Makes it easy to overeat salty food","Adds extra sodium"],"FSSAI and WHO consider it safe at normal amounts; effects depend on dose and show mostly in sensitive people.","Hard-to-stop cravings for salty snacks.","People prone to migraine or MSG reactions","Permitted by FSSAI; not allowed in infant foods","moderate"],
- ["Spices","Dried ground masala spices","Spice","Flavour","",[],"","","","","none"]]},
-hi:{n:"मसाला इंस्टेंट नूडल्स (नमूना)",h:"बहुत नमकीन, तला हुआ और प्रोसेस्ड",s:"एक पैकेट में दिन की सोडियम सीमा का 44% और सैचुरेटेड फैट का 36% है। कभी-कभार ठीक है, रोज़ का खाना नहीं।",f:["अति-प्रोसेस्ड","ज़्यादा सोडियम","पाम ऑयल"],
- k:["एक पैकेट में 880 मिग्रा सोडियम: रोज़ की सीमा का 44%।","7.2 ग्राम सैचुरेटेड फैट, ज़्यादातर पाम ऑयल से: सीमा का 36%।","फ्लेवर एन्हांसर (INS 621) संवेदनशील लोगों में सिरदर्द कर सकता है।"],a:["गेहूँ (ग्लूटेन)"],q:"कभी-कभार का स्नैक: ज़्यादा से ज़्यादा एक पैकेट, हफ़्ते में एक बार, सब्ज़ियाँ मिलाकर और आधा मसाला डालकर।",b:["WHO: सैचुरेटेड फैट ऊर्जा के 10% से कम","JECFA/EFSA ADI; FSSAI से अनुमत, शिशुओं के लिए नहीं",""],w:["भुने चने या सब्ज़ियों वाला पोहा चुनें।","नूडल्स खाएँ तो आधा मसाला डालें और सब्ज़ियाँ मिलाएँ।"],
- i:[["रिफाइंड पाम ऑयल","पाम फल से बना सस्ता वनस्पति तेल","रिफाइंड फैट","नूडल्स तलने और लंबे समय तक चलाने के लिए","दिल और रक्त नलिकाएँ",["LDL (बुरा) कोलेस्ट्रॉल बढ़ाता है","सैचुरेटेड फैट का बोझ बढ़ाता है","रोज़ खाने पर वज़न बढ़ सकता है"],"इसका लगभग आधा फैट सैचुरेटेड है, इसलिए एक पैकेट भी दिन की सीमा का बड़ा हिस्सा ले लेता है।","सालों तक नियमित सेवन से दिल की बीमारी का जोखिम बढ़ सकता है।","हाई कोलेस्ट्रॉल, हृदय रोग या डायबिटीज़ वाले लोग","","strong"],
- ["फ्लेवर एन्हांसर (INS 621)","स्वाद बढ़ाने वाला पदार्थ (मोनोसोडियम ग्लूटामेट)","फ्लेवर एन्हांसर","मसाले का स्वाद तेज़ करता है","नसें और भूख",["संवेदनशील लोगों में सिरदर्द या चेहरा लाल होना","नमकीन चीज़ें ज़्यादा खाने की आदत बनाता है","सोडियम और बढ़ाता है"],"FSSAI और WHO सामान्य मात्रा में इसे सुरक्षित मानते हैं; असर मात्रा पर निर्भर है और ज़्यादातर संवेदनशील लोगों में दिखता है।","नमकीन स्नैक्स की बार-बार तलब।","माइग्रेन या MSG से परेशानी वाले लोग","FSSAI से अनुमत; शिशुओं के भोजन में वर्जित","moderate"],
- ["मसाले","पिसे हुए सूखे मसाले","मसाला","स्वाद","",[],"","","","","none"]]},
-hinglish:{n:"Masala Instant Noodles (sample)",h:"Bohot namkeen, fried aur processed",s:"Ek packet mein din ki sodium limit ka 44% aur saturated fat ka 36% hai. Kabhi-kabhi theek, roz ka khana nahi.",f:["Ultra-processed","High sodium","Palm oil"],
- k:["Ek packet mein 880 mg sodium: daily limit ka 44%.","7.2 g saturated fat, zyada tar palm oil se: limit ka 36%.","Flavour enhancer (INS 621) sensitive logon mein sar-dard kar sakta hai."],a:["Wheat (gluten)"],q:"Kabhi-kabhi ka snack: zyada se zyada ek packet, hafte mein ek baar, sabziyan milakar aur aadha masala daalkar.",b:["WHO: saturated fat energy ke 10% se kam","JECFA/EFSA ADI; FSSAI permitted, infants ke liye nahi",""],w:["Roasted chana ya sabzi wala poha chunein.","Noodles khayein to aadha masala daalein aur sabziyan milayein."],
- i:[["Refined palm oil","Palm fruit se bana sasta vegetable oil","Refined fat","Noodles fry karne aur shelf life ke liye","Heart aur blood vessels",["LDL (bura) cholesterol badhata hai","Saturated fat ka load badhata hai","Roz khane par weight badh sakta hai"],"Iska lagbhag aadha fat saturated hai, isliye ek packet bhi din ki limit ka bada hissa le leta hai.","Saalon tak regular lene par heart disease ka risk badh sakta hai.","High cholesterol, heart disease ya diabetes wale log","","strong"],
- ["Flavour enhancer (INS 621)","Swaad badhane wala padarth (monosodium glutamate)","Flavour enhancer","Masale ka swaad tez karta hai","Nerves aur bhookh",["Sensitive logon mein sar-dard ya chehra laal hona","Namkeen cheezein zyada khane ki aadat banata hai","Sodium aur badhata hai"],"FSSAI aur WHO normal matra mein ise safe maante hain; asar matra par nirbhar hai aur zyada tar sensitive logon mein dikhta hai.","Namkeen snacks ki baar-baar talab.","Migraine ya MSG se pareshani wale log","FSSAI se permitted; infant food mein allowed nahi","moderate"],
- ["Spices","Pise hue sukhe masale","Spice","Swaad","",[],"","","","","none"]]}};
-function sample(){isSample=true;img=null;$('home').hidden=true;const s=SL[lang],lv=['avoid','watch','ok'];
- render({isLabel:true,productName:s.n,verdict:{level:'watch',headline:s.h,summary:s.s},nova:4,frequency:s.q,readQuality:{level:'high',note:''},flags:s.f,keyPoints:s.k.map((x,i)=>({level:['avoid','avoid','watch'][i],text:x})),nutrition:SN,
- ingredients:s.i.map((x,i)=>({name:x[0],plainName:x[1],category:x[2],ins:null,percent:null,role:x[3],affects:x[4],sideEffects:x[5],atNormalDose:x[6],regularUse:x[7],avoidIf:x[8],regulatory:x[9],basis:s.b[i],evidence:x[10],level:lv[i]})),swaps:s.w,allergens:s.a});}
-$('bSample').onclick=sample;
-$('out').oninput=ev=>{if(ev.target.id==='q'){qry=ev.target.value.trim().toLowerCase();ings();}};
-chrome();
+function normalize(r){
+  const n = r.per100g || {};
+  const d = {
+    productName: r.productName || "Unnamed product", language: r.language || null,
+    unit: r.unit === "ml" ? "ml" : "g",
+    servingSizeG: num(r.servingSizeG), servingsPerPack: num(r.servingsPerPack), packSizeG: num(r.packSizeG),
+    summary: r.summary || "",
+    personaCheck: r.personaCheck && r.personaCheck.message ? {status:["ok","watch","flag"].includes(r.personaCheck.status)?r.personaCheck.status:"watch", message:String(r.personaCheck.message)} : null,
+    topConcerns: Array.isArray(r.topConcerns) ? r.topConcerns.filter(x => x && x.title && x.detail).slice(0,4).map(x => ({title:String(x.title), detail:String(x.detail)})) : [],
+    swaps: Array.isArray(r.swaps) ? r.swaps.filter(x => x && x.name).slice(0,3).map(x => ({name:String(x.name), why:String(x.why||"")})) : [],
+    per:{energy:num(n.energyKcal), protein:num(n.proteinG), carbs:num(n.carbsG), totalSugar:num(n.totalSugarG), addedSugar:num(n.addedSugarG), fat:num(n.fatG), satFat:num(n.satFatG), transFat:num(n.transFatG), fibre:num(n.fibreG), sodium:num(n.sodiumMg)},
+    ingredients:(r.ingredients || []).map((x,i) => {
+      const category = CATS.includes(x.category) ? x.category : "other";
+      const concern = x.concern ? String(x.concern) : null;
+      const it = {
+        rank:i+1, name:String(x.name || "Unnamed"), percent:num(x.percent), category, ins:x.ins ? String(x.ins) : null,
+        level:["ok","watch","flag"].includes(x.level) ? x.level : "ok",
+        note:x.note ? String(x.note) : "", concern, who:x.who ? String(x.who) : null,
+        evidence:EV[x.evidence] ? x.evidence : (concern ? "limited" : "none"), regulatory:x.regulatory ? String(x.regulatory) : null,
+        contributes:NUT[x.contributes] ? x.contributes : null,
+        systems:(Array.isArray(x.systems) ? x.systems : []).filter(s => s && SYS_LABEL[s.system]).map(s => ({system:s.system, direction:s.direction === "beneficial" ? "beneficial" : "adverse", weight:clamp(Math.round(Number(s.weight)||1),1,3), effect:String(s.effect||"")}))
+      };
+      if(!it.systems.length) it.systems = inferSystems(it);
+      return it;
+    })
+  };
+  const byName = new Map(); d.ingredients.forEach(i => byName.set(norm(i.name), i.rank));
+  const find = nm => { const k = norm(nm); if(byName.has(k)) return byName.get(k); for(const [kk,rk] of byName) if(kk.includes(k) || k.includes(kk)) return rk; return null; };
+  d.interactions = (Array.isArray(r.interactions) ? r.interactions : []).map(x => {
+    const ranks = Array.from(new Set((Array.isArray(x && x.ingredients) ? x.ingredients : []).map(find).filter(v => v != null))).sort((a,b)=>a-b);
+    return ranks.length >= 2 && x.title && x.effect ? {ranks, title:String(x.title), effect:String(x.effect), basis:x.basis === "established" ? "established" : "plausible"} : null;
+  }).filter(Boolean).slice(0,4);
+  return d;
+}
+
+/* ================= maths ================= */
+const servG = () => data.servingSizeG || 100;
+function packG(){ return data.packSizeG || (data.servingSizeG && data.servingsPerPack ? data.servingSizeG*data.servingsPerPack : null) || servG()*2; }
+function basisMult(){ return basis === "100" ? 1 : basis === "serv" ? servG()/100 : packG()/100; }
+function nutVal(key, g){ /* nutrient amount in a given amount of product */
+  const n = data.per, p = key === "sugar" ? (n.addedSugar != null ? n.addedSugar : n.totalSugar) : n[key];
+  return p == null ? null : p*g/100;
+}
+function pctDV(key, v){ return v == null ? null : v/NUT[key].limit*100; }
+function dvLevel(p){ return p <= 15 ? "ok" : p <= 35 ? "warn" : "risk"; }
+function sysScores(){
+  const sc = {}, mem = {};
+  SYSTEMS.forEach(s => { sc[s.key] = 0; mem[s.key] = []; });
+  data.ingredients.forEach(i => i.systems.forEach(s => { sc[s.system] += s.weight; mem[s.system].push({rank:i.rank, weight:s.weight, direction:s.direction, effect:s.effect}); }));
+  return {sc, mem};
+}
+function shares(){
+  const ing = data.ingredients; let declared = 0; ing.forEach(i => { if(i.percent != null) declared += i.percent; });
+  declared = Math.min(declared, 92);
+  const rem = Math.max(8, 100-declared), und = ing.filter(i => i.percent == null);
+  const w = und.map((_,k) => Math.pow(.72,k)), ws = w.reduce((a,b)=>a+b,0) || 1; let k = 0;
+  return ing.map(i => i.percent != null ? Math.min(i.percent,100)/100 : (rem*w[k++]/ws)/100);
+}
+function overallLevel(){
+  const hi = [], mid = [];
+  const sugar = data.per.addedSugar != null ? data.per.addedSugar : data.per.totalSugar;
+  [["sugar",sugar,5,22.5],["fat",data.per.fat,3,17.5],["saturated fat",data.per.satFat,1.5,5],["sodium",data.per.sodium,120,600]].forEach(([nm,v,lo,hi_]) => { if(v == null) return; if(v > hi_) hi.push(nm); else if(v > lo) mid.push(nm); });
+  const flagged = data.ingredients.filter(i => i.level === "flag").length, watched = data.ingredients.filter(i => i.level === "watch").length;
+  let lvl = "ok"; if(hi.length || flagged >= 2) lvl = "flag"; else if(mid.length || flagged || watched >= 3) lvl = "watch";
+  return {lvl, hi, mid, flagged, watched};
+}
+
+/* ================= result ================= */
+function startResult(){
+  basis = data.servingSizeG ? "serv" : "100"; levelFilter = "all"; sysFocus = null; peel = 0;
+  focus = {rank:null, int:data.interactions.length ? 0 : null};
+  if(focus.int != null) focus.rank = data.interactions[0].ranks[0];
+  const ov = overallLevel(), L = LVL[ov.lvl];
+  const {sc, mem} = sysScores(); data._sys = {sc, mem};
+  const shr = shares(); data._shr = shr;
+  const lit = ov.hi.length ? "High "+ov.hi.join(", ") : ov.mid.length ? "Moderate "+ov.mid.join(", ") : "Low in sugar, fat and sodium";
+  const bases = [["100","Per 100 "+data.unit]]; if(data.servingSizeG) bases.push(["serv","Serving "+fmt(data.servingSizeG)+" "+data.unit]); bases.push(["pack","Pack "+fmt(packG())+" "+data.unit]);
+
+  $("#result").innerHTML =
+  '<div class="lg:grid lg:grid-cols-12 lg:gap-8">'+
+    /* left: compound stack */
+    '<aside class="lg:col-span-5"><div class="lg:sticky lg:top-20">'+
+      '<div class="glass rise p-4" style="--d:0ms">'+
+        '<div class="flex items-center justify-between"><span class="lbl">Compound stack</span><span class="lbl" id="depthLbl"></span></div>'+
+        '<p class="mt-1 text-[12.5px] text-mute">Cross-section by weight. Tap a layer, or scroll the dossier, to see how ingredients interact.</p>'+
+        '<div class="lbl mt-4 flex justify-between"><span>Top · most</span><span id="peelName" class="normal-case tracking-normal"></span></div>'+
+        '<div id="stack" class="relative mt-2"><div id="layers"></div><svg id="links" class="pointer-events-none absolute right-0 top-0" width="34" height="10"></svg></div>'+
+        '<div class="lbl mt-1">Bottom · least</div>'+
+        '<div class="mt-4"><div class="flex items-center justify-between"><span class="lbl">Peel depth</span><button class="lbl underline-offset-4 hover:underline" id="peelReset" type="button">Reset</button></div>'+
+          '<input id="peel" type="range" min="0" max="'+Math.max(0,data.ingredients.length-1)+'" value="0" step="1" aria-label="Peel layers from the top"></div>'+
+        '<div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-mute"><span><i style="display:inline-block;width:14px;height:6px;border-radius:2px;background:rgb(var(--ink)/.5);margin-right:6px"></i>Printed %</span><span><i style="display:inline-block;width:14px;height:6px;border-radius:2px;background:repeating-linear-gradient(135deg,rgb(var(--ink)/.5) 0 3px,rgb(var(--ink)/.2) 3px 5px);margin-right:6px"></i>Estimated from order</span></div>'+
+      '</div>'+
+      '<div class="glass rise mt-4 p-4" style="--d:80ms" id="panel" aria-live="polite"></div>'+
+    '</div></aside>'+
+
+    /* right column */
+    '<div class="mt-6 space-y-6 lg:col-span-7 lg:mt-0">'+
+      '<section class="glass rise p-5" style="--d:40ms">'+
+        '<div class="flex flex-wrap items-start justify-between gap-3"><div class="min-w-0"><span class="lbl">Specimen</span>'+
+          '<h2 class="mt-1 text-[26px] font-semibold leading-tight tracking-[-0.025em]">'+esc(data.productName)+'</h2></div>'+
+          '<span class="badge"><i class="dot '+L.dot+'"></i>Composite · '+esc(L.word)+'</span></div>'+
+        '<p class="mt-2 text-[13.5px] leading-relaxed text-ink/80">'+esc(data.summary || lit)+'</p>'+
+        (data.personaCheck ? '<div class="mt-3 flex gap-3 rounded-xl border border-line/10 bg-ink/[0.03] p-3 text-[13px]"><i class="dot '+({ok:"ok",watch:"warn",flag:"risk"}[data.personaCheck.status])+' mt-1.5"></i><div><span class="lbl">Profile · '+esc(PERSONAS[persona])+'</span><p class="mt-0.5 text-ink/85">'+esc(data.personaCheck.message)+'</p></div></div>' : '')+
+        '<div class="mt-5 flex items-center justify-between gap-3"><span class="lbl">Readouts</span><div class="seg" id="basisSeg" role="group" aria-label="Amount basis">'+bases.map(b => '<button type="button" data-b="'+b[0]+'" aria-pressed="'+(b[0]===basis)+'">'+esc(b[1])+'</button>').join("")+'</div></div>'+
+        '<div id="readouts" class="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4"></div>'+
+      '</section>'+
+
+      '<section class="glass rise p-5" style="--d:100ms"><div class="flex items-center justify-between"><span class="lbl">Body system resonance</span><span class="lbl" id="sysHint">Tap to filter</span></div>'+
+        '<div id="matrix" class="mt-3"></div><p id="sysNote" class="mt-2 min-h-[20px] text-[12.5px] text-mute"></p></section>'+
+
+      '<section class="rise" style="--d:140ms"><div class="mb-3 flex flex-wrap items-center justify-between gap-3"><span class="lbl">Ingredient dossiers · '+data.ingredients.length+'</span><div class="seg" id="lvlSeg" role="group" aria-label="Filter by level"></div></div>'+
+        '<div id="dossiers" class="space-y-3"></div></section>'+
+
+      (data.topConcerns.length ? '<section class="glass rise p-5" style="--d:60ms"><span class="lbl">Key findings</span><div class="mt-3 divide-y divide-line/10">'+data.topConcerns.map((c,k) => '<div class="grid grid-cols-[44px_1fr] gap-3 py-3 first:pt-0 last:pb-0"><span class="mono text-[11px] text-mute pt-0.5">F-'+String(k+1).padStart(2,"0")+'</span><div><p class="text-[14px] font-medium">'+esc(c.title)+'</p><p class="mt-0.5 text-[13px] leading-relaxed text-ink/75">'+esc(c.detail)+'</p></div></div>').join("")+'</div></section>' : '')+
+      (data.swaps.length ? '<section class="glass rise p-5" style="--d:60ms"><span class="lbl">Alternatives</span><div class="mt-3 grid gap-2 sm:grid-cols-2">'+data.swaps.map((w,k) => '<div class="rounded-xl border border-line/10 bg-ink/[0.03] p-3"><span class="mono text-[10.5px] text-mute">ALT-'+String(k+1).padStart(2,"0")+'</span><p class="mt-0.5 text-[14px] font-medium">'+esc(w.name)+'</p><p class="text-[12.5px] text-mute">'+esc(w.why)+'</p></div>').join("")+'</div></section>' : '')+
+      '<div class="flex flex-wrap gap-2"><button class="btn primary" id="shareBtn2" type="button">Generate summary card</button><button class="btn" id="againBtn" type="button">Scan another</button></div>'+
+    '</div>'+
+  '</div>';
+
+  buildStack(); buildMatrix(); renderReadouts(); renderLevelSeg(); buildDossiers(); renderPanel(); updateAll();
+  $("#basisSeg").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { basis = b.dataset.b; $("#basisSeg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); renderReadouts(); }));
+  $("#peel").addEventListener("input", e => { setPeel(Number(e.target.value)); setSlider(e.target); });
+  $("#peelReset").addEventListener("click", () => { $("#peel").value = 0; setPeel(0); setSlider($("#peel")); });
+  setSlider($("#peel"));
+  $("#againBtn").addEventListener("click", () => show("landing"));
+  $("#shareBtn2").addEventListener("click", openShare);
+  show("result");
+  window.addEventListener("resize", drawLinks, {passive:true});
+}
+
+/* ---- stack ---- */
+function layerH(i){ return Math.round(clamp(24 + 150*data._shr[i.rank-1], 26, 176)); }
+function buildStack(){
+  $("#layers").innerHTML = data.ingredients.map(i =>
+    '<button type="button" class="layer'+(i.percent == null ? " est" : "")+'" data-r="'+i.rank+'" style="height:'+layerH(i)+'px;--hue:'+HUE[i.category]+'" aria-label="'+esc(i.name+", layer "+i.rank)+'">'+
+      '<span class="mono text-[10px] text-ink/60">'+String(i.rank).padStart(2,"0")+'</span>'+
+      '<span class="min-w-0 flex-1 truncate text-[13px] font-medium">'+esc(i.name)+'</span>'+
+      '<span class="mono text-[11px] text-ink/60">'+(i.percent != null ? fmt(i.percent)+"%" : "")+'</span></button>').join("");
+  $("#layers").querySelectorAll(".layer").forEach(b => b.addEventListener("click", () => selectRank(Number(b.dataset.r), true)));
+}
+function setPeel(p){
+  peel = clamp(p, 0, data.ingredients.length-1);
+  $$(".layer").forEach(el => el.classList.toggle("peeled", Number(el.dataset.r)-1 < peel));
+  if(focus.rank != null && focus.rank-1 < peel){ focus.rank = peel+1; focus.int = firstInt(focus.rank); }
+  updateAll(); setTimeout(drawLinks, 760);
+}
+function setSlider(el){ const mx = Number(el.max) || 1; el.style.setProperty("--p", (Number(el.value)/mx*100)+"%"); }
+const firstInt = rank => { const k = data.interactions.findIndex(x => x.ranks.includes(rank)); return k < 0 ? null : k; };
+function selectRank(rank, fromTap){
+  if(rank-1 < peel) return;
+  focus.rank = rank;
+  if(!(focus.int != null && data.interactions[focus.int].ranks.includes(rank))) focus.int = firstInt(rank);
+  updateAll();
+  if(fromTap && window.matchMedia("(min-width:1024px)").matches){ const el = $("#ing-"+rank); if(el) el.scrollIntoView({behavior: reduced ? "auto" : "smooth", block:"center"}); }
+}
+function litSet(){ const s = new Set(); if(focus.int != null) data.interactions[focus.int].ranks.forEach(r => s.add(r)); else if(focus.rank != null) s.add(focus.rank); return s; }
+function sysMatch(){ if(!sysFocus) return null; return new Set(data._sys.mem[sysFocus].map(m => m.rank)); }
+function updateAll(){
+  const lit = litSet(), sm = sysMatch();
+  $$(".layer").forEach(el => {
+    const r = Number(el.dataset.r), isLit = lit.has(r), isMatch = sm && sm.has(r);
+    el.classList.toggle("lit", isLit && !sm); el.classList.toggle("match", !!isMatch);
+    el.classList.toggle("dim", sm ? !isMatch : (lit.size ? !isLit : false));
+  });
+  $$(".dossier").forEach(el => {
+    const r = Number(el.dataset.r), isLit = lit.has(r), isMatch = sm && sm.has(r);
+    el.classList.toggle("match", !!isMatch); el.classList.toggle("lit", isLit && !sm);
+    el.classList.toggle("dim", !!sm && !isMatch);
+  });
+  $$("#matrix .sys").forEach(el => el.setAttribute("aria-pressed", String(el.dataset.s === sysFocus)));
+  const top = data.ingredients[peel];
+  const dl = $("#depthLbl"); if(dl) dl.textContent = "Layer "+(peel+1)+" / "+data.ingredients.length;
+  const pn = $("#peelName"); if(pn) pn.textContent = top ? top.name : "";
+  renderPanel(); drawLinks();
+}
+function drawLinks(){
+  const svg = $("#links"), wrap = $("#layers"); if(!svg || !wrap) return;
+  const H = wrap.offsetHeight; svg.setAttribute("height", Math.max(10,H)); svg.setAttribute("viewBox","0 0 34 "+Math.max(10,H));
+  if(sysFocus || focus.int == null){ svg.innerHTML = ""; return; }
+  const ranks = data.interactions[focus.int].ranks.filter(r => r-1 >= peel), pts = [];
+  ranks.forEach(r => { const el = wrap.querySelector('.layer[data-r="'+r+'"]'); if(el) pts.push(el.offsetTop + el.offsetHeight/2); });
+  let h = "";
+  for(let k=0;k<pts.length-1;k++) h += '<path d="M2 '+pts[k]+' C 30 '+pts[k]+', 30 '+pts[k+1]+', 2 '+pts[k+1]+'"/>';
+  pts.forEach(y => { h += '<circle cx="2" cy="'+y+'" r="3"/>'; });
+  svg.innerHTML = h;
+}
+
+/* ---- interaction panel ---- */
+function renderPanel(){
+  const el = $("#panel"); if(!el) return;
+  const i = focus.rank != null ? data.ingredients[focus.rank-1] : null;
+  const tabs = data.interactions.length ? '<div class="mb-3 flex flex-wrap gap-1.5">'+data.interactions.map((x,k) => '<button type="button" class="badge" data-int="'+k+'" style="'+(focus.int===k?"border-color:rgb(var(--accent));color:rgb(var(--accent))":"")+'">INT-'+String(k+1).padStart(2,"0")+'</button>').join("")+'</div>' : '';
+  let body = "";
+  if(focus.int != null){
+    const x = data.interactions[focus.int];
+    body = '<div class="flex items-start justify-between gap-3"><p class="text-[15px] font-medium leading-snug">'+esc(x.title)+'</p><span class="badge">'+(x.basis === "established" ? "Established" : "Plausible")+'</span></div>'+
+      '<div class="mt-2 flex flex-wrap gap-1.5">'+x.ranks.map(r => '<button type="button" class="badge" data-pick="'+r+'" '+(r-1 < peel ? "disabled style=\"opacity:.4\"" : "")+'><i class="dot" style="background:rgb('+HUE[data.ingredients[r-1].category]+')"></i>'+esc(data.ingredients[r-1].name)+'</button>').join("")+'</div>'+
+      '<p class="mt-3 text-[13px] leading-relaxed text-ink/80">'+esc(x.effect)+'</p>';
+  }else if(i){
+    body = '<p class="text-[15px] font-medium">'+esc(i.name)+'</p><p class="mt-1 text-[13px] leading-relaxed text-ink/75">No combined effect flagged for this ingredient. '+esc(i.note)+'</p>';
+  }else{
+    body = '<p class="text-[13px] text-mute">Select a layer to see how it behaves with the others.</p>';
+  }
+  el.innerHTML = '<span class="lbl">Interaction readout</span><div class="mt-3">'+tabs+body+'</div>';
+  el.querySelectorAll("[data-int]").forEach(b => b.addEventListener("click", () => { focus.int = Number(b.dataset.int); focus.rank = data.interactions[focus.int].ranks.find(r => r-1 >= peel) || focus.rank; sysFocus = null; updateAll(); syncSysUI(); }));
+  el.querySelectorAll("[data-pick]").forEach(b => b.addEventListener("click", () => selectRank(Number(b.dataset.pick), true)));
+}
+
+/* ---- readouts ---- */
+function renderReadouts(){
+  const g = basis === "100" ? 100 : basis === "serv" ? servG() : packG();
+  const keys = ["sugar","sodium","fat","satFat"], cards = [];
+  keys.forEach(k => {
+    const v = nutVal(k, g); if(v == null) return;
+    const p = pctDV(k, v), lv = dvLevel(p);
+    let sub = "";
+    if(k === "sugar") sub = "≈ "+fmt(v/4)+" tsp"; else if(k === "sodium") sub = "= "+fmt(v*2.5/1000)+" g salt"; else if(k === "fat") sub = "≈ "+fmt(v/5)+" tsp";
+    cards.push('<div class="ro glass" style="border-radius:14px"><span class="lbl">'+NUT[k].label+'</span><div class="mt-1 flex items-baseline gap-1"><span class="mono text-[22px] font-medium tracking-tight">'+fmt(v)+'</span><span class="mono text-[11px] text-mute">'+NUT[k].unit+'</span></div>'+
+      '<div class="mono mt-0.5 text-[11px] text-mute">'+fmt(p)+'% DV'+(sub ? " · "+sub : "")+'</div><div class="bar"><i style="width:'+clamp(p,2,100)+'%;background:rgb(var(--'+lv+'))"></i></div></div>');
+  });
+  $("#readouts").innerHTML = cards.length ? cards.join("") : '<p class="col-span-full text-[13px] text-mute">No nutrition table was readable. Add a photo of the table for quantity readouts.</p>';
+}
+
+/* ---- body systems ---- */
+function buildMatrix(){
+  const {sc, mem} = data._sys;
+  $("#matrix").innerHTML = SYSTEMS.map(s => {
+    const score = sc[s.key], n = mem[s.key].length, w = clamp(score/9*100, score ? 8 : 0, 100);
+    return '<button type="button" class="sys'+(score ? "" : " none")+'" data-s="'+s.key+'" aria-pressed="false" '+(score ? "" : 'aria-disabled="true"')+'>'+
+      '<div><p class="text-[14px] font-medium">'+s.label+'</p><p class="text-[11.5px] text-mute">'+s.sub+'</p></div>'+
+      '<div class="track"><i class="'+(score ? "live" : "")+'" style="width:'+w+'%;--pd:'+(3.6 - Math.min(score,9)*.25).toFixed(2)+'s"></i></div>'+
+      '<span class="mono text-right text-[12px] text-mute">'+(n || "–")+'</span></button>';
+  }).join("");
+  $("#matrix").querySelectorAll(".sys").forEach(b => b.addEventListener("click", () => {
+    if(!data._sys.sc[b.dataset.s]) return;
+    sysFocus = sysFocus === b.dataset.s ? null : b.dataset.s;
+    updateAll(); syncSysUI();
+    if(sysFocus){ const d = $("#dossiers"); if(d && !window.matchMedia("(min-width:1024px)").matches) d.scrollIntoView({behavior: reduced ? "auto" : "smooth", block:"start"}); }
+  }));
+}
+function syncSysUI(){
+  const note = $("#sysNote"), hint = $("#sysHint");
+  if(!sysFocus){ note.textContent = ""; hint.textContent = "Tap to filter"; return; }
+  const m = data._sys.mem[sysFocus].slice().sort((a,b) => b.weight - a.weight);
+  hint.textContent = "Filtering · tap again to clear";
+  note.innerHTML = '<span class="text-ink">'+SYS_LABEL[sysFocus]+'</span> · '+m.length+(m.length === 1 ? " ingredient" : " ingredients")+'. Strongest: '+m.slice(0,3).map(x => esc(data.ingredients[x.rank-1].name)).join(", ")+'.';
+}
+
+/* ---- dossiers ---- */
+function renderLevelSeg(){
+  const c = {all:data.ingredients.length, flag:0, watch:0, ok:0}; data.ingredients.forEach(i => c[i.level]++);
+  const defs = [["all","All "+c.all],["flag","Elevated "+c.flag],["watch","Monitor "+c.watch],["ok","Nominal "+c.ok]];
+  const seg = $("#lvlSeg");
+  seg.innerHTML = defs.map(d => '<button type="button" data-l="'+d[0]+'" aria-pressed="'+(levelFilter===d[0])+'">'+d[1]+'</button>').join("");
+  seg.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { levelFilter = b.dataset.l; renderLevelSeg(); buildDossiers(); updateAll(); }));
+}
+function doseGrams(t){ const sv = servG(), bite = Math.min(5, sv/3), pk = Math.max(packG(), sv*1.25); return t <= 50 ? lerp(bite, sv, t/50) : lerp(sv, pk, (t-50)/50); }
+function buildDossiers(){
+  const list = data.ingredients.filter(i => levelFilter === "all" || i.level === levelFilter);
+  $("#dossiers").innerHTML = list.length ? list.map((i,k) => dossier(i,k)).join("") : '<div class="glass p-5 text-[13px] text-mute">No ingredients at this level.</div>';
+  $$("#dossiers .dossier").forEach(el => updateDose(el));
+  $$("#dossiers input[type=range]").forEach(r => setSlider(r));
+  $$("#dossiers .dossier").forEach(el => el.addEventListener("click", e => { if(e.target.closest("input")) return; selectRank(Number(el.dataset.r), false); }));
+  observe();
+}
+function dossier(i, k){
+  const L = LVL[i.level], e = EV[i.evidence];
+  const rows = [];
+  if(i.note) rows.push(["Function", esc(i.note)]);
+  if(i.concern) rows.push(["Regular intake", esc(i.concern)]);
+  if(i.who) rows.push(["Population", esc(i.who)]);
+  if(i.concern || i.evidence !== "none") rows.push(["Evidence", '<span class="evseg" aria-hidden="true">'+[1,2,3].map(n => '<i class="'+(n<=e[1]?"on":"")+'"></i>').join("")+'</span>'+esc(e[0])]);
+  if(i.regulatory) rows.push(["Regulatory", esc(i.regulatory)]);
+  if(!i.concern && i.level === "ok") rows.push(["Concern", "None known at normal dietary amounts."]);
+  const sys = i.systems.length ? '<div class="mt-3 flex flex-wrap gap-1.5">'+i.systems.map(s => '<span class="badge" title="'+esc(s.effect)+'">'+(s.direction === "beneficial" ? "▲" : "▼")+' '+SYS_LABEL[s.system]+' · w'+s.weight+(s.inferred ? " · rule-based" : "")+'</span>').join("")+'</div>'+
+    '<ul class="mt-2 space-y-0.5 text-[12.5px] text-ink/70">'+i.systems.map(s => '<li>'+esc(SYS_LABEL[s.system])+': '+esc(s.effect)+'</li>').join("")+'</ul>' : '';
+  return '<article class="dossier glass rise" id="ing-'+i.rank+'" data-r="'+i.rank+'" style="--d:'+Math.min(k*45,400)+'ms">'+
+    '<header class="flex items-start gap-3"><span class="mono pt-1 text-[11px] text-mute">ING·'+String(i.rank).padStart(2,"0")+'</span>'+
+      '<div class="min-w-0 flex-1"><h3 class="text-[17px] font-semibold tracking-[-0.015em]">'+esc(i.name)+'</h3>'+
+        '<div class="mt-1.5 flex flex-wrap gap-1.5"><span class="badge"><i class="dot" style="background:rgb('+HUE[i.category]+')"></i>'+esc(CAT_NAME[i.category])+'</span>'+
+          (i.ins ? '<span class="badge">INS '+esc(i.ins)+'</span>' : '')+(i.percent != null ? '<span class="badge">'+fmt(i.percent)+'% declared</span>' : '')+
+          '<span class="badge"><i class="dot '+L.dot+'"></i>'+L.word+'</span></div></div></header>'+
+    '<dl class="kv mt-4">'+rows.map(r => '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join("")+'</dl>'+sys+
+    '<div class="mt-4 border-t border-line/10 pt-4"><div class="flex items-center justify-between"><span class="lbl">Dose</span><span class="mono text-[11.5px] text-ink/80" data-o="amt"></span></div>'+
+      '<input type="range" min="0" max="100" value="50" data-r="'+i.rank+'" aria-label="Amount of product eaten for '+esc(i.name)+'">'+
+      '<div class="lbl flex justify-between" style="font-size:9.5px"><span>Bite</span><span>Serving</span><span>Pack</span></div>'+
+      '<div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[12.5px]"><div><span class="lbl">Ingredient</span><p class="mono mt-0.5" data-o="ing"></p></div><div><span class="lbl" data-o="nutl">Product</span><p class="mono mt-0.5" data-o="nut"></p></div></div>'+
+      (i.systems.length ? '<div class="mt-3 space-y-1.5" data-o="sys"></div><p class="mt-2 text-[10.5px] leading-snug text-mute">Index = evidence weight × amount eaten relative to one serving. Illustrative, not a dose-response curve.</p>' : '')+
+    '</div></article>';
+}
+function updateDose(card){
+  const i = data.ingredients[Number(card.dataset.r)-1], rng = card.querySelector("input[type=range]"); if(!rng) return;
+  const g = doseGrams(Number(rng.value)), ex = g/servG(), q = s => card.querySelector('[data-o="'+s+'"]');
+  q("amt").textContent = fmt(g)+" "+data.unit+" · ×"+fmt(ex)+(data.servingSizeG ? " serving" : " of 100 "+data.unit);
+  q("ing").textContent = i.percent != null ? fmt(i.percent*g/100)+" "+data.unit+" (declared)" : "Not quantified on label";
+  if(i.contributes){ const v = nutVal(i.contributes, g); q("nutl").textContent = "Product "+NUT[i.contributes].label.toLowerCase(); q("nut").textContent = v == null ? "–" : fmt(v)+" "+NUT[i.contributes].unit+" · "+fmt(pctDV(i.contributes, v))+"% DV"; }
+  else { q("nutl").textContent = "Product"; q("nut").textContent = fmt(g)+" "+data.unit; }
+  const sy = q("sys");
+  if(sy) sy.innerHTML = i.systems.map(s => { const idx = clamp((s.weight/3)*Math.min(ex,2)/2*100, 1, 100); return '<div class="flex items-center gap-3"><span class="w-28 shrink-0 text-[11.5px] text-mute">'+SYS_LABEL[s.system]+'</span><div class="minibar"><i style="width:'+idx+'%"></i></div><span class="mono w-8 text-right text-[11px] text-mute">'+Math.round(idx)+'</span></div>'; }).join("");
+}
+document.addEventListener("input", e => {
+  const r = e.target; if(!(r instanceof HTMLInputElement) || r.type !== "range" || !r.closest(".dossier")) return;
+  setSlider(r); updateDose(r.closest(".dossier"));
+});
+function observe(){
+  if(io) io.disconnect();
+  if(!("IntersectionObserver" in window)) return;
+  io = new IntersectionObserver(entries => {
+    if(sysFocus) return;
+    entries.forEach(en => { if(en.isIntersecting){ const r = Number(en.target.dataset.r); if(r-1 >= peel && r !== focus.rank){ focus.rank = r; if(!(focus.int != null && data.interactions[focus.int].ranks.includes(r))) focus.int = firstInt(r); updateAll(); } } });
+  }, {rootMargin:"-42% 0px -42% 0px", threshold:0});
+  $$("#dossiers .dossier").forEach(el => io.observe(el));
+}
+
+/* ================= share card ================= */
+function wrap(ctx, text, x, y, maxW, lh, maxLines){
+  const words = String(text).split(/\s+/); let line = "", n = 0;
+  for(let k=0;k<words.length;k++){
+    const t = line ? line+" "+words[k] : words[k];
+    if(ctx.measureText(t).width > maxW && line){ n++; if(maxLines && n >= maxLines){ ctx.fillText(line.replace(/\s*\S*$/,"")+"…", x, y); return y+lh; } ctx.fillText(line, x, y); y += lh; line = words[k]; } else line = t;
+  }
+  if(line){ ctx.fillText(line, x, y); y += lh; }
+  return y;
+}
+function rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function buildCanvas(){
+  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const ctx = c.getContext("2d");
+  const sans = "Geist, Inter, system-ui, -apple-system, 'Segoe UI', sans-serif", mono = "'Geist Mono', ui-monospace, Menlo, monospace";
+  const ov = overallLevel(), L = LVL[ov.lvl], col = {ok:"#34D399", warn:"#F5B544", risk:"#F87171"};
+  let g = ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,"#0A0E16"); g.addColorStop(1,"#05070B"); ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = "rgba(255,255,255,0.045)"; ctx.lineWidth = 1;
+  for(let x=0;x<=W;x+=54){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=0;y<=H;y+=54){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  const rg = ctx.createRadialGradient(W/2,-80,0,W/2,-80,720); rg.addColorStop(0,"rgba(125,211,252,0.22)"); rg.addColorStop(1,"rgba(125,211,252,0)"); ctx.fillStyle = rg; ctx.fillRect(0,0,W,H);
+  const P = 72; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#7DD3FC"; ctx.font = "600 26px "+mono; ctx.fillText("LABSCAN", P, 104);
+  ctx.fillStyle = "rgba(232,236,245,0.45)"; ctx.font = "400 22px "+mono; const dt = new Date().toISOString().slice(0,10); ctx.textAlign = "right"; ctx.fillText(dt, W-P, 104); ctx.textAlign = "left";
+  ctx.fillStyle = "#E8ECF5"; ctx.font = "600 70px "+sans; let y = wrap(ctx, data.productName, P, 220, W-2*P, 78, 2);
+  y += 6; const bw = 360; rr(ctx,P,y,bw,52,14); ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,0.14)"; ctx.stroke();
+  ctx.fillStyle = col[L.dot]; ctx.beginPath(); ctx.arc(P+28,y+26,7,0,7); ctx.fill();
+  ctx.fillStyle = "#E8ECF5"; ctx.font = "500 24px "+mono; ctx.fillText("COMPOSITE · "+L.word.toUpperCase(), P+48, y+34);
+  y += 96;
+  const bas = data.servingSizeG ? "serv" : "100", gm = bas === "serv" ? servG() : 100;
+  ctx.fillStyle = "rgba(232,236,245,0.5)"; ctx.font = "400 22px "+mono; ctx.fillText(("READOUTS · "+(bas === "serv" ? "PER SERVING ("+fmt(gm)+" "+data.unit+")" : "PER 100 "+data.unit.toUpperCase())), P, y); y += 28;
+  const keys = ["sugar","sodium","fat","satFat"].filter(k => nutVal(k,gm) != null), cw = (W-2*P-24)/2;
+  keys.forEach((k,n) => {
+    const cx = P + (n%2)*(cw+24), cy = y + Math.floor(n/2)*190, v = nutVal(k,gm), p = pctDV(k,v), lv = dvLevel(p);
+    rr(ctx,cx,cy,cw,166,20); ctx.fillStyle = "rgba(255,255,255,0.05)"; ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,0.12)"; ctx.stroke();
+    ctx.fillStyle = "rgba(232,236,245,0.55)"; ctx.font = "400 20px "+mono; ctx.fillText(NUT[k].label.toUpperCase(), cx+26, cy+40);
+    ctx.fillStyle = "#E8ECF5"; ctx.font = "500 56px "+mono; ctx.fillText(fmt(v), cx+26, cy+104);
+    const vw = ctx.measureText(fmt(v)).width; ctx.fillStyle = "rgba(232,236,245,0.5)"; ctx.font = "400 22px "+mono; ctx.fillText(NUT[k].unit, cx+34+vw, cy+104);
+    ctx.textAlign = "right"; ctx.fillStyle = col[lv]; ctx.font = "500 26px "+mono; ctx.fillText(fmt(p)+"% DV", cx+cw-26, cy+104); ctx.textAlign = "left";
+    rr(ctx,cx+26,cy+132,cw-52,6,3); ctx.fillStyle = "rgba(255,255,255,0.12)"; ctx.fill();
+    rr(ctx,cx+26,cy+132,Math.max(8,(cw-52)*clamp(p,0,100)/100),6,3); ctx.fillStyle = col[lv]; ctx.fill();
+  });
+  y += Math.ceil(keys.length/2)*190 + 22;
+  ctx.fillStyle = "rgba(232,236,245,0.5)"; ctx.font = "400 22px "+mono; ctx.fillText("COMPOUND STACK · TOP "+Math.min(8,data.ingredients.length), P, y); y += 22;
+  const sh = data._shr, top = data.ingredients.slice(0,8), tot = top.reduce((a,i) => a + sh[i.rank-1], 0) || 1, sw = W-2*P;
+  let sx = P; top.forEach(i => { const w = Math.max(10, sw*sh[i.rank-1]/tot); ctx.fillStyle = "rgb("+HUE[i.category].replace(/ /g,",")+")"; ctx.globalAlpha = .85; rr(ctx,sx,y,w-4,22,6); ctx.fill(); ctx.globalAlpha = 1; sx += w; });
+  y += 58; ctx.font = "400 22px "+sans; ctx.fillStyle = "rgba(232,236,245,0.78)";
+  top.slice(0,4).forEach((i,n) => { ctx.fillText(String(i.rank).padStart(2,"0")+"  "+(i.name.length > 20 ? i.name.slice(0,19)+"…" : i.name), P + (n%2)*((W-2*P)/2), y + Math.floor(n/2)*34); });
+  y += 90;
+  ctx.fillStyle = "rgba(232,236,245,0.5)"; ctx.font = "400 22px "+mono; ctx.fillText("BODY SYSTEM RESONANCE", P, y); y += 14;
+  const sc = data._sys.sc, colW = (W-2*P)/SYSTEMS.length;
+  SYSTEMS.forEach((s,n) => { const x = P + n*colW, v = clamp(sc[s.key]/9,0,1); rr(ctx,x,y+8,colW-14,8,4); ctx.fillStyle = "rgba(255,255,255,0.1)"; ctx.fill(); if(v > 0){ rr(ctx,x,y+8,Math.max(10,(colW-14)*v),8,4); ctx.fillStyle = "#7DD3FC"; ctx.shadowColor = "rgba(125,211,252,.8)"; ctx.shadowBlur = 14; ctx.fill(); ctx.shadowBlur = 0; }
+    ctx.fillStyle = v ? "#E8ECF5" : "rgba(232,236,245,0.35)"; ctx.font = "500 17px "+mono; ctx.fillText(s.label.slice(0,10).toUpperCase(), x, y+46); });
+  ctx.fillStyle = "rgba(232,236,245,0.38)"; ctx.font = "400 19px "+mono; ctx.fillText("Educational analysis from a label photo. Not medical advice.", P, H-62);
+  return c;
+}
+function openShare(){
+  let canvas; try{ canvas = buildCanvas(); }catch(e){ console.error(e); return; }
+  canvas.toBlob(blob => {
+    if(!blob) return;
+    if(shareUrl) URL.revokeObjectURL(shareUrl);
+    shareUrl = URL.createObjectURL(blob);
+    $("#shareImg").src = shareUrl; $("#shareSave").href = shareUrl;
+    const file = new File([blob], "labscan-summary.png", {type:"image/png"});
+    const can = navigator.canShare && navigator.canShare({files:[file]});
+    $("#shareNative").hidden = !can;
+    $("#shareNative").onclick = () => navigator.share({files:[file], title:data.productName+" · LabScan"}).catch(()=>{});
+    $("#shareSheet").hidden = false; document.body.classList.add("lock");
+  }, "image/png");
+}
+function closeShare(){ $("#shareSheet").hidden = true; document.body.classList.remove("lock"); }
+$("#shareBtn").addEventListener("click", openShare);
+$("#shareClose").addEventListener("click", closeShare);
+$("#shareSheet").addEventListener("click", e => { if(e.target.id === "shareSheet") closeShare(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape" && !$("#shareSheet").hidden) closeShare(); });
+})();
 </script>
 </body>
 </html>
